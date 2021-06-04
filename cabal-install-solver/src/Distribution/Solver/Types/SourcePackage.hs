@@ -15,6 +15,7 @@ import Distribution.PackageDescription
 
 import Data.ByteString.Lazy (ByteString)
 
+
 -- | A package description along with the location of the package sources.
 --
 data SourcePackage loc = SourcePackage
@@ -29,6 +30,7 @@ data SourcePackage loc = SourcePackage
 
 instance Binary loc => Binary (SourcePackage loc)
 instance Structured loc => Structured (SourcePackage loc)
+instance Inspectable loc => Inspectable (SourcePackage loc)
 
 instance Package (SourcePackage a) where packageId = srcpkgPackageId
 

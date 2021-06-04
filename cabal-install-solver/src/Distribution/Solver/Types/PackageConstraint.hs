@@ -100,6 +100,7 @@ data PackageProperty
 
 instance Binary PackageProperty
 instance Structured PackageProperty
+instance Inspectable PackageProperty
 
 -- | Pretty-prints a package property.
 dispPackageProperty :: PackageProperty -> Disp.Doc

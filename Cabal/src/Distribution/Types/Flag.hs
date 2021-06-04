@@ -56,6 +56,7 @@ data PackageFlag = MkPackageFlag
 
 instance Binary PackageFlag
 instance Structured PackageFlag
+instance Inspectable PackageFlag
 instance NFData PackageFlag where rnf = genericRnf
 
 -- | A 'PackageFlag' initialized with default parameters.
@@ -76,6 +77,8 @@ emptyFlag name = MkPackageFlag
 -- @since 2.0.0.2
 newtype FlagName = FlagName ShortText
     deriving (Eq, Generic, Ord, Show, Read, Typeable, Data, NFData)
+
+instance Inspectable FlagName
 
 -- | Construct a 'FlagName' from a 'String'
 --
@@ -127,6 +130,7 @@ newtype FlagAssignment
   deriving (Binary, Generic, NFData, Typeable)
 
 instance Structured FlagAssignment
+instance Inspectable FlagAssignment
 
 instance Eq FlagAssignment where
   (==) (FlagAssignment m1) (FlagAssignment m2)

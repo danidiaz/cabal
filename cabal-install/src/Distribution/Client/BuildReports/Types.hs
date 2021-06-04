@@ -38,6 +38,7 @@ data ReportLevel = NoReports | AnonymousReports | DetailedReports
 
 instance Binary ReportLevel
 instance Structured ReportLevel
+instance Inspectable ReportLevel
 
 instance Pretty ReportLevel where
   pretty NoReports        = Disp.text "none"

@@ -41,6 +41,7 @@ instance Parsec LibraryVisibility where
 
 instance Binary LibraryVisibility
 instance Structured LibraryVisibility
+instance Inspectable LibraryVisibility
 instance NFData LibraryVisibility where rnf = genericRnf
 
 instance Semigroup LibraryVisibility where

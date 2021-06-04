@@ -35,6 +35,7 @@ data PackageSpecifier pkg =
 
 instance Binary pkg => Binary (PackageSpecifier pkg)
 instance Structured pkg => Structured (PackageSpecifier pkg)
+instance Inspectable pkg => Inspectable (PackageSpecifier pkg)
 
 pkgSpecifierTarget :: Package pkg => PackageSpecifier pkg -> PackageName
 pkgSpecifierTarget (NamedPackage name _)       = name

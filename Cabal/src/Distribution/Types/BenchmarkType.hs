@@ -25,6 +25,7 @@ data BenchmarkType = BenchmarkTypeExe Version
 
 instance Binary BenchmarkType
 instance Structured BenchmarkType
+instance Inspectable BenchmarkType
 instance NFData BenchmarkType where rnf = genericRnf
 
 knownBenchmarkTypes :: [BenchmarkType]

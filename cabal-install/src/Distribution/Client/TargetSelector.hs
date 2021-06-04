@@ -156,6 +156,7 @@ data TargetSelector =
                             (Either UnqualComponentName ComponentName)
                             SubComponentTarget
   deriving (Eq, Ord, Show, Generic)
+instance Inspectable TargetSelector
 
 -- | Does this 'TargetPackage' selector arise from syntax referring to a
 -- package in the current directory (e.g. @tests@ or no giving no explicit
@@ -164,9 +165,11 @@ data TargetSelector =
 --
 data TargetImplicitCwd = TargetImplicitCwd | TargetExplicitNamed
   deriving (Eq, Ord, Show, Generic)
+instance Inspectable TargetImplicitCwd
 
 data ComponentKind = LibKind | FLibKind | ExeKind | TestKind | BenchKind
-  deriving (Eq, Ord, Enum, Show)
+  deriving (Eq, Ord, Enum, Show, Generic)
+instance Inspectable ComponentKind
 
 type ComponentKindFilter = ComponentKind
 
@@ -188,6 +191,7 @@ data SubComponentTarget =
 
 instance Binary SubComponentTarget
 instance Structured SubComponentTarget
+instance Inspectable SubComponentTarget
 
 
 -- ------------------------------------------------------------

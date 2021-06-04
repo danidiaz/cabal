@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- |
 --
@@ -53,7 +54,8 @@ data DistDirParams = DistDirParams {
     -- TODO (see #3343):
     --  Flag assignments
     --  Optimization
-    }
+    } deriving Generic
+instance Inspectable DistDirParams
 
 
 -- | The layout of the project state directory. Traditionally this has been
@@ -119,7 +121,8 @@ data DistDirLayout = DistDirLayout {
        distBinDirectory             :: FilePath,
 
        distPackageDB                :: CompilerId -> PackageDB
-     }
+    } deriving Generic
+instance Inspectable DistDirLayout
 
 
 -- | The layout of a cabal nix-style store.
@@ -132,7 +135,8 @@ data StoreDirLayout = StoreDirLayout {
        storePackageDBStack    :: CompilerId -> PackageDBStack,
        storeIncomingDirectory :: CompilerId -> FilePath,
        storeIncomingLock      :: CompilerId -> UnitId -> FilePath
-     }
+     } deriving Generic
+instance Inspectable StoreDirLayout
 
 
 --TODO: move to another module, e.g. CabalDirLayout?
@@ -149,7 +153,8 @@ data CabalDirLayout = CabalDirLayout {
 
        cabalLogsDirectory         :: FilePath,
        cabalWorldFile             :: FilePath
-     }
+     } deriving Generic
+instance Inspectable CabalDirLayout
 
 
 -- | Information about the root directory of the project.
@@ -165,7 +170,8 @@ data ProjectRoot =
        -- | -- ^ An explicit project root. It contains the absolute project
        -- root dir and the relative @cabal.project@ file (or explicit override)
      | ProjectRootExplicit FilePath FilePath
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+instance Inspectable ProjectRoot
 
 -- | Make the default 'DistDirLayout' based on the project root dir and
 -- optional overrides for the location of the @dist@ directory and the

@@ -2,14 +2,19 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | cabal-install CLI command: run
 --
 module Distribution.Client.CmdRun (
     -- * The @run@ CLI and action
     runCommand,
-    runAction,
-    handleShebang, validScript,
+    RunAction (..),
+    makeRunAction,
+    HandleShebangAction (..),
+    makeHandleShebangAction,
+    validScript,
 
     -- * Internals exposed for testing
     matchesMultipleProblem,
@@ -108,6 +113,7 @@ import System.Directory
 import System.FilePath
          ( (</>), isValid, isPathSeparator, takeExtension )
 
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has) )
 
 runCommand :: CommandUI (NixStyleFlags ())
 runCommand = CommandUI
@@ -156,8 +162,23 @@ runCommand = CommandUI
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-runAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-runAction flags@NixStyleFlags {..} targetStrings globalFlags = do
+newtype RunAction = RunAction { runAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable RunAction
+
+makeRunAction :: ( Has RunProjectPreBuildPhase cc
+                 , Has RunProjectBuildPhase cc 
+                 , Has RunProjectPostBuildPhase cc 
+                 )
+              => cc -> RunAction
+makeRunAction cc = RunAction $ makeRunAction_ cc
+
+makeRunAction_ :: ( Has RunProjectPreBuildPhase cc
+                  , Has RunProjectBuildPhase cc 
+                  , Has RunProjectPostBuildPhase cc 
+                  )
+               => cc -> Function RunAction
+makeRunAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
     globalTmp <- getTemporaryDirectory
     tmpDir <- createTempDirectory globalTmp "cabal-repl."
 
@@ -192,7 +213,7 @@ runAction flags@NixStyleFlags {..} targetStrings globalFlags = do
           Right sels -> return (baseCtx, sels)
 
     buildCtx <-
-      runProjectPreBuildPhase verbosity baseCtx' $ \elaboratedPlan -> do
+      runProjectPreBuildPhase (has cc) verbosity baseCtx' $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx')) $
               die' verbosity $
@@ -238,8 +259,8 @@ runAction flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx' buildCtx
 
-    buildOutcomes <- runProjectBuildPhase verbosity baseCtx' buildCtx
-    runProjectPostBuildPhase verbosity baseCtx' buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx' buildCtx
+    runProjectPostBuildPhase (has cc) verbosity baseCtx' buildCtx buildOutcomes
 
 
     let elaboratedPlan = elaboratedPlanToExecute buildCtx
@@ -328,9 +349,18 @@ validScript script
 --
 -- First argument is the 'FilePath' to the script to be executed; second
 -- argument is a list of arguments to be passed to the script.
-handleShebang :: FilePath -> [String] -> IO ()
-handleShebang script args =
-  runAction (commandDefaultFlags runCommand) (script:args) defaultGlobalFlags
+--
+--
+newtype HandleShebangAction = HandleShebangAction { handleShebang :: FilePath -> [String] -> IO () }
+    deriving Generic
+instance Instrumentable HandleShebangAction
+
+makeHandleShebangAction :: Has RunAction cc => cc -> HandleShebangAction
+makeHandleShebangAction cc = HandleShebangAction $ makeHandleShebangAction_ cc
+
+makeHandleShebangAction_ :: Has RunAction cc => cc -> Function HandleShebangAction
+makeHandleShebangAction_ cc script args =
+  runAction (has cc) (commandDefaultFlags runCommand) (script:args) defaultGlobalFlags
 
 parseScriptBlock :: BS.ByteString -> ParseResult Executable
 parseScriptBlock str =

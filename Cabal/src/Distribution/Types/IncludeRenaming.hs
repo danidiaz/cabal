@@ -31,6 +31,7 @@ data IncludeRenaming
 
 instance Binary IncludeRenaming
 instance Structured IncludeRenaming
+instance Inspectable IncludeRenaming
 
 instance NFData IncludeRenaming where rnf = genericRnf
 

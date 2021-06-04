@@ -1,6 +1,8 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE RecordWildCards, NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | This module deals with building and incrementally rebuilding a collection
 -- of packages. It is what backs the @cabal build@ and @configure@ commands,
@@ -50,7 +52,8 @@ module Distribution.Client.ProjectOrchestration (
 
     -- * Pre-build phase: decide what to do.
     withInstallPlan,
-    runProjectPreBuildPhase,
+    RunProjectPreBuildPhase(..),
+    makeRunProjectPreBuildPhase,
     ProjectBuildContext(..),
 
     -- ** Selecting what targets we mean
@@ -89,10 +92,13 @@ module Distribution.Client.ProjectOrchestration (
     printPlan,
 
     -- * Build phase: now do it.
-    runProjectBuildPhase,
+    RunProjectBuildPhase(..),
+    makeRunProjectBuildPhase,
 
     -- * Post build actions
-    runProjectPostBuildPhase,
+    RunProjectPostBuildPhase(..),
+    makeRunProjectPostBuildPhase,
+
     dieOnBuildFailures,
 
     -- * Dummy projects
@@ -169,11 +175,14 @@ import           Control.Exception (assert)
 import           System.Posix.Signals (sigKILL, sigSEGV)
 #endif
 
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+
 
 -- | Tracks what command is being executed, because we need to hide this somewhere
 -- for cases that need special handling (usually for error reporting).
 data CurrentCommand = InstallCommand | HaddockCommand | OtherCommand
-                    deriving (Show, Eq)
+                    deriving (Show, Eq, Generic)
+instance Inspectable CurrentCommand
 
 -- | This holds the context of a project prior to solving: the content of the
 -- @cabal.project@ and all the local package @.cabal@ files.
@@ -186,6 +195,8 @@ data ProjectBaseContext = ProjectBaseContext {
        buildSettings  :: BuildTimeSettings,
        currentCommand :: CurrentCommand
      }
+     deriving Generic
+instance Inspectable ProjectBaseContext
 
 establishProjectBaseContext
     :: Verbosity
@@ -276,17 +287,23 @@ data ProjectBuildContext = ProjectBuildContext {
       -- | The targets selected by @selectPlanSubset@. This is useful eg. in
       -- CmdRun, where we need a valid target to execute.
       targetsMap             :: TargetsMap
-    }
-
+    } deriving (Generic)
+instance Inspectable ProjectBuildContext
 
 -- | Pre-build phase: decide what to do.
 --
+-- Instrumentation note: this function passes down the 
+-- composition context, but it's not itself instrumented, because
+-- instrumenting polymorphic functions is trickier.
 withInstallPlan
-    :: Verbosity
+    :: ( Has RebuildInstallPlan cc ) 
+    => cc
+    -> Verbosity
     -> ProjectBaseContext
     -> (ElaboratedInstallPlan -> ElaboratedSharedConfig -> IO a)
     -> IO a
 withInstallPlan
+    cc
     verbosity
     ProjectBaseContext {
       distDirLayout,
@@ -300,18 +317,36 @@ withInstallPlan
     -- the user has asked for.
     --
     (elaboratedPlan, _, elaboratedShared, _, _) <-
-      rebuildInstallPlan verbosity
+      rebuildInstallPlan (has cc)
+                         verbosity
                          distDirLayout cabalDirLayout
                          projectConfig
                          localPackages
     action elaboratedPlan elaboratedShared
 
-runProjectPreBuildPhase
-    :: Verbosity
-    -> ProjectBaseContext
-    -> (ElaboratedInstallPlan -> IO (ElaboratedInstallPlan, TargetsMap))
-    -> IO ProjectBuildContext
-runProjectPreBuildPhase
+
+newtype RunProjectPreBuildPhase = RunProjectPreBuildPhase { 
+            runProjectPreBuildPhase :: Verbosity 
+                                    -> ProjectBaseContext
+                                    -> (ElaboratedInstallPlan -> IO (ElaboratedInstallPlan, TargetsMap))
+                                    -> IO ProjectBuildContext
+    }
+    deriving Generic
+instance Instrumentable RunProjectPreBuildPhase
+
+makeRunProjectPreBuildPhase :: ( Has RebuildInstallPlan cc 
+                               )
+                            => cc 
+                            -> RunProjectPreBuildPhase
+makeRunProjectPreBuildPhase cc = RunProjectPreBuildPhase $ makeRunProjectPreBuildPhase_ cc
+
+makeRunProjectPreBuildPhase_::
+    ( Has RebuildInstallPlan cc 
+    )
+    => cc
+    -> Function RunProjectPreBuildPhase
+makeRunProjectPreBuildPhase_
+    cc
     verbosity
     ProjectBaseContext {
       distDirLayout,
@@ -325,7 +360,8 @@ runProjectPreBuildPhase
     -- the user has asked for.
     --
     (elaboratedPlan, _, elaboratedShared, _, _) <-
-      rebuildInstallPlan verbosity
+      rebuildInstallPlan (has cc)
+                         verbosity
                          distDirLayout cabalDirLayout
                          projectConfig
                          localPackages
@@ -363,15 +399,26 @@ runProjectPreBuildPhase
 -- Execute all or parts of the description of what to do to build or
 -- rebuild the various packages needed.
 --
-runProjectBuildPhase :: Verbosity
-                     -> ProjectBaseContext
-                     -> ProjectBuildContext
-                     -> IO BuildOutcomes
-runProjectBuildPhase _ ProjectBaseContext{buildSettings} _
+
+newtype RunProjectBuildPhase = RunProjectBuildPhase { 
+            runProjectBuildPhase :: Verbosity 
+                                 -> ProjectBaseContext
+                                 -> ProjectBuildContext
+                                 -> IO BuildOutcomes
+    }
+    deriving Generic
+instance Instrumentable RunProjectBuildPhase
+
+makeRunProjectBuildPhase :: cc -> RunProjectBuildPhase
+makeRunProjectBuildPhase cc = RunProjectBuildPhase $ makeRunProjectBuildPhase_ cc
+
+makeRunProjectBuildPhase_ :: cc
+                          -> Function RunProjectBuildPhase
+makeRunProjectBuildPhase_ _ _ ProjectBaseContext{buildSettings} _
   | buildSettingDryRun buildSettings
   = return Map.empty
 
-runProjectBuildPhase verbosity
+makeRunProjectBuildPhase_ _ verbosity
                      ProjectBaseContext{..} ProjectBuildContext {..} =
     fmap (Map.union (previousBuildOutcomes pkgsBuildStatus)) $
     rebuildTargets verbosity
@@ -393,16 +440,27 @@ runProjectBuildPhase verbosity
 --
 -- Update bits of state based on the build outcomes and report any failures.
 --
-runProjectPostBuildPhase :: Verbosity
-                         -> ProjectBaseContext
-                         -> ProjectBuildContext
-                         -> BuildOutcomes
-                         -> IO ()
-runProjectPostBuildPhase _ ProjectBaseContext{buildSettings} _ _
+newtype RunProjectPostBuildPhase = RunProjectPostBuildPhase { 
+            runProjectPostBuildPhase :: Verbosity 
+                                     -> ProjectBaseContext
+                                     -> ProjectBuildContext
+                                     -> BuildOutcomes
+                                     -> IO ()
+    }
+    deriving Generic
+instance Instrumentable RunProjectPostBuildPhase
+
+makeRunProjectPostBuildPhase :: cc -> RunProjectPostBuildPhase
+makeRunProjectPostBuildPhase cc = RunProjectPostBuildPhase $ makeRunProjectPostBuildPhase_ cc
+
+makeRunProjectPostBuildPhase_ 
+                         :: cc
+                         -> Function RunProjectPostBuildPhase
+makeRunProjectPostBuildPhase_ _ _ ProjectBaseContext{buildSettings} _ _
   | buildSettingDryRun buildSettings
   = return ()
 
-runProjectPostBuildPhase verbosity
+makeRunProjectPostBuildPhase_ _ verbosity
                          ProjectBaseContext {..} ProjectBuildContext {..}
                          buildOutcomes = do
     -- Update other build artefacts
@@ -654,7 +712,9 @@ data AvailableTargetIndexes = AvailableTargetIndexes {
 
        availableTargetsByPackageNameAndUnqualComponentName
          :: AvailableTargetsMap (PackageName, UnqualComponentName)
-     }
+     } deriving (Generic)
+instance Inspectable AvailableTargetIndexes
+
 type AvailableTargetsMap k = Map k [AvailableTarget (UnitId, ComponentName)]
 
 -- We define a bunch of indexes to help 'resolveTargets' with resolving
@@ -1193,6 +1253,8 @@ dieOnBuildFailures verbosity currentCommand plan buildOutcomes
 data BuildFailurePresentation =
        ShowBuildSummaryOnly   BuildFailureReason
      | ShowBuildSummaryAndLog BuildFailureReason FilePath
+    deriving Generic
+instance Inspectable BuildFailurePresentation
 
 -------------------------------------------------------------------------------
 -- Dummy projects

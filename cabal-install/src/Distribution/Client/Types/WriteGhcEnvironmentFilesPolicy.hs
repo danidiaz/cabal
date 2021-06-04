@@ -18,3 +18,4 @@ data WriteGhcEnvironmentFilesPolicy
 
 instance Binary WriteGhcEnvironmentFilesPolicy
 instance Structured WriteGhcEnvironmentFilesPolicy
+instance Inspectable WriteGhcEnvironmentFilesPolicy

@@ -99,6 +99,7 @@ data OpenUnitId
 
 instance Binary OpenUnitId
 instance Structured OpenUnitId 
+instance Inspectable OpenUnitId 
 instance NFData OpenUnitId where
     rnf (IndefFullUnitId cid subst) = rnf cid `seq` rnf subst
     rnf (DefiniteUnitId uid) = rnf uid
@@ -166,6 +167,7 @@ data OpenModule
 
 instance Binary OpenModule
 instance Structured OpenModule
+instance Inspectable OpenModule
 
 instance NFData OpenModule where
     rnf (OpenModule uid mod_name) = rnf uid `seq` rnf mod_name

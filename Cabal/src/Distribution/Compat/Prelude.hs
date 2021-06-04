@@ -40,6 +40,7 @@ module Distribution.Compat.Prelude (
     NFData (..), genericRnf,
     Binary (..),
     Structured,
+    Inspectable,
     Alternative (..),
     MonadPlus (..),
     IsString (..),
@@ -208,6 +209,7 @@ import qualified Text.PrettyPrint as Disp
 import Distribution.Compat.Exception
 import Distribution.Compat.NonEmptySet (NonEmptySet)
 import Distribution.Utils.Structured   (Structured)
+import Distribution.Simple.Utils.Inspectable   (Inspectable)
 
 import qualified Debug.Trace
 

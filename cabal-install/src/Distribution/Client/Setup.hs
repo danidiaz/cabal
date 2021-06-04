@@ -611,6 +611,8 @@ data ConfigExFlags = ConfigExFlags {
   }
   deriving (Eq, Show, Generic)
 
+instance Inspectable ConfigExFlags
+
 defaultConfigExFlags :: ConfigExFlags
 defaultConfigExFlags = mempty { configSolver     = Flag defaultSolver }
 
@@ -1669,6 +1671,7 @@ data InstallFlags = InstallFlags {
   deriving (Eq, Show, Generic)
 
 instance Binary InstallFlags
+instance Inspectable InstallFlags
 
 defaultInstallFlags :: InstallFlags
 defaultInstallFlags = InstallFlags {

@@ -65,6 +65,7 @@ data RemoteRepo =
 
 instance Binary RemoteRepo
 instance Structured RemoteRepo
+instance Inspectable RemoteRepo
 
 instance Pretty RemoteRepo where
     pretty r =
@@ -107,6 +108,7 @@ data LocalRepo = LocalRepo
 
 instance Binary LocalRepo
 instance Structured LocalRepo
+instance Inspectable LocalRepo
 
 -- | Note: doesn't parse 'localRepoSharedCache' field.
 instance Parsec LocalRepo where
@@ -172,6 +174,7 @@ data Repo
 
 instance Binary Repo
 instance Structured Repo
+instance Inspectable Repo
 
 -- | Check if this is a remote repo
 isRepoRemote :: Repo -> Bool

@@ -31,6 +31,7 @@ instance L.HasBuildInfo Executable where
 
 instance Binary Executable
 instance Structured Executable
+instance Inspectable Executable
 instance NFData Executable where rnf = genericRnf
 
 instance Monoid Executable where

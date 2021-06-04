@@ -35,6 +35,7 @@ licenseDocumentRef = _lrDocument
 
 instance Binary LicenseRef
 instance Structured LicenseRef
+instance Inspectable LicenseRef
 
 instance NFData LicenseRef where
     rnf (LicenseRef d l) = rnf d `seq` rnf l

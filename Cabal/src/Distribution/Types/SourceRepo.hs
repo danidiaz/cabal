@@ -98,6 +98,7 @@ emptySourceRepo kind = SourceRepo
 
 instance Binary SourceRepo
 instance Structured SourceRepo
+instance Inspectable SourceRepo
 instance NFData SourceRepo where rnf = genericRnf
 
 -- | What this repo info is for, what it represents.
@@ -118,6 +119,7 @@ data RepoKind =
 
 instance Binary RepoKind
 instance Structured RepoKind
+instance Inspectable RepoKind
 instance NFData RepoKind where rnf = genericRnf
 
 -- | An enumeration of common source control systems. The fields used in the
@@ -131,6 +133,7 @@ data KnownRepoType = Darcs | Git | SVN | CVS
 
 instance Binary KnownRepoType
 instance Structured KnownRepoType
+instance Inspectable KnownRepoType
 instance NFData KnownRepoType where rnf = genericRnf
 
 instance Parsec KnownRepoType where
@@ -150,6 +153,7 @@ data RepoType = KnownRepoType KnownRepoType
 
 instance Binary RepoType
 instance Structured RepoType
+instance Inspectable RepoType
 instance NFData RepoType where rnf = genericRnf
 
 knownRepoTypes :: [KnownRepoType]

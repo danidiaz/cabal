@@ -25,6 +25,7 @@ data PkgconfigDependency = PkgconfigDependency
 
 instance Binary PkgconfigDependency
 instance Structured PkgconfigDependency
+instance Inspectable PkgconfigDependency
 instance NFData PkgconfigDependency where rnf = genericRnf
 
 instance Pretty PkgconfigDependency where

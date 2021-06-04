@@ -31,6 +31,7 @@ import Distribution.Types.UnqualComponentName
 import Distribution.Package
 import Distribution.Version
 
+
 -- ---------------------------------------------------------------------------
 -- The 'GenericPackageDescription' type
 
@@ -66,6 +67,7 @@ instance Package GenericPackageDescription where
 
 instance Binary GenericPackageDescription
 instance Structured GenericPackageDescription
+instance Inspectable GenericPackageDescription 
 instance NFData GenericPackageDescription where rnf = genericRnf
 
 emptyGenericPackageDescription :: GenericPackageDescription

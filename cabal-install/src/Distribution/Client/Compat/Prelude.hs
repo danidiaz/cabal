@@ -17,6 +17,7 @@ module Distribution.Client.Compat.Prelude
 
 import Distribution.Client.Compat.Orphans ()
 import Distribution.Compat.Prelude.Internal
+import Distribution.Client.Utils.Inspectable
 import Prelude ()
 
 import Distribution.Parsec    as X (CabalParsing, Parsec (..), eitherParsec, explicitEitherParsec, simpleParsec)

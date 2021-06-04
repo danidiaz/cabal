@@ -7,6 +7,7 @@ import Prelude ()
 import qualified Distribution.Compat.CharParsing as P
 import qualified Text.PrettyPrint                as PP
 
+
 data OverwritePolicy
     = NeverOverwrite
     | AlwaysOverwrite
@@ -14,6 +15,7 @@ data OverwritePolicy
 
 instance Binary OverwritePolicy
 instance Structured OverwritePolicy
+instance Inspectable OverwritePolicy
 
 instance Parsec OverwritePolicy where
     parsec = do

@@ -57,6 +57,7 @@ data ConstraintSource =
 
 instance Binary ConstraintSource
 instance Structured ConstraintSource
+instance Inspectable ConstraintSource
 
 -- | Description of a 'ConstraintSource'.
 showConstraintSource :: ConstraintSource -> String

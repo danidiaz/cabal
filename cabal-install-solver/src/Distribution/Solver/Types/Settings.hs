@@ -52,6 +52,7 @@ newtype StrongFlags = StrongFlags Bool
 newtype AllowBootLibInstalls = AllowBootLibInstalls Bool
   deriving (BooleanFlag, Eq, Generic, Show)
 
+
 -- | Should we consider all packages we know about, or only those that
 -- have constraints explicitly placed on them or which are goals?
 data OnlyConstrained
@@ -59,11 +60,14 @@ data OnlyConstrained
   | OnlyConstrainedAll
   deriving (Eq, Generic, Show)
 
+
 newtype EnableBackjumping = EnableBackjumping Bool
   deriving (BooleanFlag, Eq, Generic, Show)
 
+
 newtype SolveExecutables = SolveExecutables Bool
   deriving (BooleanFlag, Eq, Generic, Show)
+
 
 instance Binary ReorderGoals
 instance Binary CountConflicts
@@ -88,6 +92,19 @@ instance Structured StrongFlags
 instance Structured AllowBootLibInstalls
 instance Structured OnlyConstrained
 instance Structured SolveExecutables
+
+instance Inspectable ReorderGoals
+instance Inspectable CountConflicts
+instance Inspectable FineGrainedConflicts
+instance Inspectable MinimizeConflictSet
+instance Inspectable IndependentGoals
+instance Inspectable AvoidReinstalls
+instance Inspectable ShadowPkgs
+instance Inspectable StrongFlags
+instance Inspectable AllowBootLibInstalls
+instance Inspectable OnlyConstrained
+instance Inspectable EnableBackjumping
+instance Inspectable SolveExecutables
 
 instance Pretty OnlyConstrained where
   pretty OnlyConstrainedAll  = PP.text "all"

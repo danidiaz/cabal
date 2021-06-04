@@ -28,6 +28,7 @@ data ModuleReexport = ModuleReexport {
 
 instance Binary ModuleReexport
 instance Structured ModuleReexport
+instance Inspectable ModuleReexport
 instance NFData ModuleReexport where rnf = genericRnf
 
 instance Pretty ModuleReexport where

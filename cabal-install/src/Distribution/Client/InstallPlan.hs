@@ -107,6 +107,7 @@ import Control.Exception
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
+
 -- When cabal tries to install a number of packages, including all their
 -- dependencies it has a non-trivial problem to solve.
 --
@@ -202,6 +203,7 @@ instance (IsNode ipkg, IsNode srcpkg, Key ipkg ~ UnitId, Key srcpkg ~ UnitId)
 
 instance (Binary ipkg, Binary srcpkg) => Binary (GenericPlanPackage ipkg srcpkg)
 instance (Structured ipkg, Structured srcpkg) => Structured (GenericPlanPackage ipkg srcpkg)
+instance (Inspectable ipkg, Inspectable srcpkg) => Inspectable (GenericPlanPackage ipkg srcpkg)
 
 type PlanPackage = GenericPlanPackage
                    InstalledPackageInfo (ConfiguredPackage UnresolvedPkgLoc)
@@ -235,7 +237,8 @@ data GenericInstallPlan ipkg srcpkg = GenericInstallPlan {
     planGraph      :: !(Graph (GenericPlanPackage ipkg srcpkg)),
     planIndepGoals :: !IndependentGoals
   }
-  deriving (Typeable)
+  deriving (Generic, Typeable)
+instance (Inspectable ipkg, Inspectable srcpkg) => Inspectable (GenericInstallPlan ipkg srcpkg)
 
 -- | 'GenericInstallPlan' specialised to most commonly used types.
 type InstallPlan = GenericInstallPlan

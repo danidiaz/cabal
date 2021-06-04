@@ -24,6 +24,7 @@ import Distribution.Utils.Generic (isAbsoluteOnAnyPlatform)
 import qualified Distribution.Compat.CharParsing as P
 -- import qualified Text.PrettyPrint                as Disp
 
+
 -------------------------------------------------------------------------------
 -- * SymbolicPath
 -------------------------------------------------------------------------------
@@ -39,6 +40,7 @@ newtype SymbolicPath from to = SymbolicPath FilePath
 
 instance Binary (SymbolicPath from to)
 instance (Typeable from, Typeable to) => Structured (SymbolicPath from to)
+instance Inspectable (SymbolicPath from to)
 instance NFData (SymbolicPath from to) where rnf = genericRnf
 
 -- | Extract underlying 'FilePath'.
@@ -101,3 +103,4 @@ deriving instance Data LicenseFile
 
 instance IsDir PackageDir
 instance IsDir SourceDir
+

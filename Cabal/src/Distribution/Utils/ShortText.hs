@@ -31,6 +31,7 @@ import Prelude ()
 
 import Distribution.Utils.String     (decodeStringUtf8, encodeStringUtf8)
 import Distribution.Utils.Structured (Structured (..), nominalStructure)
+import qualified Distribution.Simple.Utils.Inspectable as Inspectable
 
 #if defined(MIN_VERSION_bytestring)
 # if MIN_VERSION_bytestring(0,10,4)
@@ -131,6 +132,9 @@ null = List.null . unST
 #endif
 
 instance Structured ShortText where structure = nominalStructure
+
+instance Inspectable ShortText where
+    toInspectionJSON short = Inspectable.String (fromShortText short)
 
 instance NFData ShortText where
     rnf = rnf . unST

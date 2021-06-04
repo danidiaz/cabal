@@ -3,9 +3,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TupleSections     #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Distribution.Client.CmdListBin (
     listbinCommand,
-    listbinAction,
+    ListbinAction (..),
+    makeListbinAction
 ) where
 
 import Distribution.Client.Compat.Prelude
@@ -42,6 +45,8 @@ import qualified Distribution.Client.InstallPlan         as IP
 import qualified Distribution.Simple.InstallDirs         as InstallDirs
 import qualified Distribution.Solver.Types.ComponentDeps as CD
 
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+
 -------------------------------------------------------------------------------
 -- Command
 -------------------------------------------------------------------------------
@@ -63,8 +68,20 @@ listbinCommand = CommandUI
 -- Action
 -------------------------------------------------------------------------------
 
-listbinAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-listbinAction flags@NixStyleFlags{..} args globalFlags = do
+newtype ListbinAction = ListbinAction { listbinAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable ListbinAction
+
+makeListbinAction :: ( Has RunProjectPreBuildPhase cc 
+                     )
+                  => cc 
+                  -> ListbinAction
+makeListbinAction cc = ListbinAction $ makeListbinAction_ cc
+
+makeListbinAction_ :: ( Has RunProjectPreBuildPhase cc 
+                      )
+                   => cc -> Function ListbinAction
+makeListbinAction_ cc flags@NixStyleFlags{..} args globalFlags = do
     -- fail early if multiple target selectors specified
     target <- case args of
         []  -> die' verbosity "One target is required, none provided"
@@ -80,7 +97,7 @@ listbinAction flags@NixStyleFlags{..} args globalFlags = do
         =<< readTargetSelectors localPkgs (Just ExeKind) [target]
 
     buildCtx <-
-      runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
             -- Interpret the targets on the command line as build targets
             -- (as opposed to say repl or haddock targets).
             targets <- either (reportTargetProblems verbosity) return

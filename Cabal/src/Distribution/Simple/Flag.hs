@@ -57,6 +57,7 @@ data Flag a = Flag a | NoFlag deriving (Eq, Generic, Show, Read, Typeable)
 
 instance Binary a => Binary (Flag a)
 instance Structured a => Structured (Flag a)
+instance Inspectable a => Inspectable (Flag a)
 
 instance Functor Flag where
   fmap f (Flag x) = Flag (f x)

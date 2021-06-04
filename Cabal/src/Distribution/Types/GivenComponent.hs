@@ -26,3 +26,4 @@ data GivenComponent =
 
 instance Binary GivenComponent
 instance Structured GivenComponent
+instance Inspectable GivenComponent

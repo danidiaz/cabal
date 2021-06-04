@@ -29,6 +29,7 @@ data PackageVersionConstraint = PackageVersionConstraint PackageName VersionRang
 
 instance Binary PackageVersionConstraint
 instance Structured PackageVersionConstraint
+instance Inspectable PackageVersionConstraint
 instance NFData PackageVersionConstraint where rnf = genericRnf
 
 instance Pretty PackageVersionConstraint where

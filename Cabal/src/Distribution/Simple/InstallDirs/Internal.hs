@@ -15,6 +15,7 @@ data PathComponent =
 
 instance Binary PathComponent
 instance Structured PathComponent
+instance Inspectable PathComponent
 
 data PathTemplateVariable =
        PrefixVar     -- ^ The @$prefix@ path variable
@@ -45,6 +46,7 @@ data PathTemplateVariable =
 
 instance Binary PathTemplateVariable
 instance Structured PathTemplateVariable
+instance Inspectable PathTemplateVariable
 
 instance Show PathTemplateVariable where
   show PrefixVar     = "prefix"

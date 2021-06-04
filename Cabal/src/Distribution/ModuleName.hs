@@ -46,6 +46,7 @@ unModuleName (ModuleName s) = fromShortText s
 
 instance Binary ModuleName
 instance Structured ModuleName
+instance Inspectable ModuleName
 
 instance NFData ModuleName where
     rnf (ModuleName ms) = rnf ms

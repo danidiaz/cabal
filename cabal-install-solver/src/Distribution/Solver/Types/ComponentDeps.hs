@@ -67,6 +67,7 @@ data Component =
 
 instance Binary Component
 instance Structured Component
+instance Inspectable Component
 
 instance Pretty Component where
     pretty ComponentLib        = PP.text "lib"
@@ -104,6 +105,7 @@ instance Traversable ComponentDeps where
 
 instance Binary a => Binary (ComponentDeps a)
 instance Structured a => Structured (ComponentDeps a)
+instance Inspectable a => Inspectable (ComponentDeps a)
 
 componentNameToComponent :: CN.ComponentName -> Component
 componentNameToComponent (CN.CLibName  LN.LMainLibName)   = ComponentLib
