@@ -25,6 +25,8 @@ newtype UnqualComponentName = UnqualComponentName ShortText
   deriving (Generic, Read, Show, Eq, Ord, Typeable, Data,
             Semigroup, Monoid) -- TODO: bad enabler of bad monoids
 
+instance Inspectable UnqualComponentName
+
 -- | Convert 'UnqualComponentName' to 'String'
 --
 -- @since 2.0.0.2

@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE RankNTypes #-}
 
 -----------------------------------------------------------------------------
@@ -40,7 +41,8 @@ data TestInstance = TestInstance
         -- message if the option is not supported or the value could not be
         -- correctly parsed; otherwise, a 'TestInstance' with the option set to
         -- the given value is returned.
-    }
+    } deriving Generic
+instance Inspectable TestInstance
 
 data OptionDescr = OptionDescr
     { optionName        :: String
@@ -49,7 +51,8 @@ data OptionDescr = OptionDescr
     , optionType        :: OptionType
     , optionDefault     :: Maybe String
     }
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Generic)
+instance Inspectable OptionDescr
 
 data OptionType
     = OptionFile
@@ -68,7 +71,8 @@ data OptionType
     | OptionEnum [String]
     | OptionSet [String]
     | OptionRngSeed
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Generic)
+instance Inspectable OptionType
 
 data Test
     = Test TestInstance
@@ -85,6 +89,8 @@ data Test
         , groupTests    :: [Test]
         }
     | ExtraOptions [OptionDescr] Test
+    deriving Generic
+instance Inspectable Test
 
 type Options = [(String, String)]
 

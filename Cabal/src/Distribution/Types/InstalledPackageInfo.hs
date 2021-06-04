@@ -96,6 +96,7 @@ data InstalledPackageInfo
 
 instance Binary InstalledPackageInfo
 instance Structured InstalledPackageInfo
+instance Inspectable InstalledPackageInfo
 
 instance NFData InstalledPackageInfo where rnf = genericRnf
 

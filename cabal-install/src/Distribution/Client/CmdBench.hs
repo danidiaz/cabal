@@ -1,11 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | cabal-install CLI command: bench
 --
 module Distribution.Client.CmdBench (
     -- * The @bench@ CLI and action
     benchCommand,
-    benchAction,
+    BenchAction (..),
+    makeBenchAction,
 
     -- * Internals exposed for testing
     componentNotBenchmarkProblem,
@@ -37,6 +40,8 @@ import Distribution.Verbosity
          ( normal )
 import Distribution.Simple.Utils
          ( wrapText, die' )
+
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
 
 benchCommand :: CommandUI (NixStyleFlags ())
 benchCommand = CommandUI {
@@ -79,8 +84,23 @@ benchCommand = CommandUI {
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-benchAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-benchAction flags@NixStyleFlags {..} targetStrings globalFlags = do
+newtype BenchAction = BenchAction { benchAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable BenchAction
+
+makeBenchAction :: ( Has RunProjectPreBuildPhase cc
+                   , Has RunProjectBuildPhase cc 
+                   , Has RunProjectPostBuildPhase cc 
+                   )
+                => cc -> BenchAction
+makeBenchAction cc = BenchAction $ makeBenchAction_ cc
+
+makeBenchAction_ :: ( Has RunProjectPreBuildPhase cc
+                    , Has RunProjectBuildPhase cc 
+                    , Has RunProjectPostBuildPhase cc 
+                    )
+                 => cc -> Function BenchAction
+makeBenchAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 
@@ -88,7 +108,7 @@ benchAction flags@NixStyleFlags {..} targetStrings globalFlags = do
                    =<< readTargetSelectors (localPackages baseCtx) (Just BenchKind) targetStrings
 
     buildCtx <-
-      runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx)) $
               die' verbosity $
@@ -114,8 +134,8 @@ benchAction flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase verbosity baseCtx buildCtx
-    runProjectPostBuildPhase verbosity baseCtx buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
+    runProjectPostBuildPhase (has cc) verbosity baseCtx buildCtx buildOutcomes
   where
     verbosity = fromFlagOrDefault normal (configVerbosity configFlags)
     cliConfig = commandLineFlagsToProjectConfig globalFlags flags 

@@ -1,12 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | cabal-install CLI command: test
 --
 module Distribution.Client.CmdTest (
     -- * The @test@ CLI and action
     testCommand,
-    testAction,
-
+    TestAction (..),
+    makeTestAction,
     -- * Internals exposed for testing
     isSubComponentProblem,
     notTestProblem,
@@ -41,6 +43,8 @@ import Distribution.Simple.Utils
          ( notice, wrapText, die' )
 
 import qualified System.Exit (exitSuccess)
+
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
 
 
 testCommand :: CommandUI (NixStyleFlags ())
@@ -91,8 +95,24 @@ testCommand = CommandUI
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-testAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-testAction flags@NixStyleFlags {..} targetStrings globalFlags = do
+
+newtype TestAction = TestAction { testAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable TestAction
+
+makeTestAction :: ( Has RunProjectPreBuildPhase cc
+                  , Has RunProjectBuildPhase cc 
+                  , Has RunProjectPostBuildPhase cc 
+                  )
+               => cc -> TestAction
+makeTestAction cc = TestAction $ makeTestAction_ cc
+
+makeTestAction_ :: ( Has RunProjectPreBuildPhase cc
+                   , Has RunProjectBuildPhase cc 
+                   , Has RunProjectPostBuildPhase cc 
+                   )
+                => cc -> Function TestAction
+makeTestAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 
@@ -100,7 +120,7 @@ testAction flags@NixStyleFlags {..} targetStrings globalFlags = do
                    =<< readTargetSelectors (localPackages baseCtx) (Just TestKind) targetStrings
 
     buildCtx <-
-      runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx)) $
               die' verbosity $
@@ -126,8 +146,8 @@ testAction flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase verbosity baseCtx buildCtx
-    runProjectPostBuildPhase verbosity baseCtx buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
+    runProjectPostBuildPhase (has cc) verbosity baseCtx buildCtx buildOutcomes
   where
     failWhenNoTestSuites = testFailWhenNoTestSuites testFlags
     verbosity = fromFlagOrDefault normal (configVerbosity configFlags)

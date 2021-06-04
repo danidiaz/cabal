@@ -71,6 +71,7 @@ data ComponentRequestedSpec
 
 instance Binary ComponentRequestedSpec
 instance Structured ComponentRequestedSpec
+instance Inspectable ComponentRequestedSpec
 
 -- | The default set of enabled components.  Historically tests and
 -- benchmarks are NOT enabled by default.

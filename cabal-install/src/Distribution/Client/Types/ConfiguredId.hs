@@ -61,6 +61,7 @@ annotatedIdToConfiguredId aid = ConfiguredId {
 
 instance Binary ConfiguredId
 instance Structured ConfiguredId
+instance Inspectable ConfiguredId
 
 instance Show ConfiguredId where
   show cid = show (confInstId cid)

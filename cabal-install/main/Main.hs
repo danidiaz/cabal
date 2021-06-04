@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -116,6 +117,8 @@ import Distribution.Client.Utils              (determineNumJobs
                                               ,relaxEncodingErrors
                                               ,cabalInstallVersion
                                               )
+import Distribution.Client.CompositionContext ( withCompositionContext )
+import Distribution.Client.Instrumentation    ( has )
 
 import Distribution.Package (packageId)
 import Distribution.PackageDescription
@@ -181,6 +184,7 @@ main = do
   (args0, args1) <- break (== "--") <$> getArgs
   mainWorker =<< (++ args1) <$> expandResponse args0
 
+
 mainWorker :: [String] -> IO ()
 mainWorker args = do
   maybeScriptAndArgs <- case args of
@@ -201,7 +205,7 @@ mainWorker args = do
           CommandHelp     help           -> printCommandHelp help
           CommandList     opts           -> printOptionsList opts
           CommandErrors   errs           -> maybe (printErrors errs) go maybeScriptAndArgs where
-            go (script:|scriptArgs) = CmdRun.handleShebang script scriptArgs
+            go (script:|scriptArgs) =  withCompositionContext $ \cc -> CmdRun.handleShebang (has cc) script scriptArgs
           CommandReadyToGo action        -> action globalFlags
 
   where
@@ -227,6 +231,9 @@ mainWorker args = do
                                   ++ display cabalVersion
                                   ++ " of the Cabal library "
 
+    usesCompositionContext action flags targets globalFlags = 
+        withCompositionContext $ \cc -> action (has cc) flags targets globalFlags
+
     commands = map commandFromSpec commandSpecs
     commandSpecs =
       [ regularCmd listCommand listAction
@@ -245,20 +252,20 @@ mainWorker args = do
       , hiddenCmd  formatCommand formatAction
       , hiddenCmd  actAsSetupCommand actAsSetupAction
       , hiddenCmd  manpageCommand (manpageAction commandSpecs)
-      , regularCmd CmdListBin.listbinCommand     CmdListBin.listbinAction
+      , regularCmd CmdListBin.listbinCommand  (usesCompositionContext CmdListBin.listbinAction)
 
       ] ++ concat
       [ newCmd  CmdConfigure.configureCommand CmdConfigure.configureAction
       , newCmd  CmdUpdate.updateCommand       CmdUpdate.updateAction
-      , newCmd  CmdBuild.buildCommand         CmdBuild.buildAction
-      , newCmd  CmdRepl.replCommand           CmdRepl.replAction
-      , newCmd  CmdFreeze.freezeCommand       CmdFreeze.freezeAction
-      , newCmd  CmdHaddock.haddockCommand     CmdHaddock.haddockAction
-      , newCmd  CmdInstall.installCommand     CmdInstall.installAction
-      , newCmd  CmdRun.runCommand             CmdRun.runAction
-      , newCmd  CmdTest.testCommand           CmdTest.testAction
-      , newCmd  CmdBench.benchCommand         CmdBench.benchAction
-      , newCmd  CmdExec.execCommand           CmdExec.execAction
+      , newCmd  CmdBuild.buildCommand         (usesCompositionContext CmdBuild.buildAction)
+      , newCmd  CmdRepl.replCommand           (usesCompositionContext CmdRepl.replAction)
+      , newCmd  CmdFreeze.freezeCommand       (usesCompositionContext CmdFreeze.freezeAction)
+      , newCmd  CmdHaddock.haddockCommand     (usesCompositionContext CmdHaddock.haddockAction)
+      , newCmd  CmdInstall.installCommand     (usesCompositionContext CmdInstall.installAction)
+      , newCmd  CmdRun.runCommand             (usesCompositionContext CmdRun.runAction)
+      , newCmd  CmdTest.testCommand           (usesCompositionContext CmdTest.testAction)
+      , newCmd  CmdBench.benchCommand         (usesCompositionContext CmdBench.benchAction)
+      , newCmd  CmdExec.execCommand           (usesCompositionContext CmdExec.execAction)
       , newCmd  CmdClean.cleanCommand         CmdClean.cleanAction
       , newCmd  CmdSdist.sdistCommand         CmdSdist.sdistAction
 

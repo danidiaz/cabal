@@ -125,6 +125,8 @@ data GlobalFlags = GlobalFlags {
     globalNumericVersion :: Flag Bool
   } deriving (Generic, Typeable)
 
+instance Inspectable GlobalFlags
+
 defaultGlobalFlags :: GlobalFlags
 defaultGlobalFlags  = GlobalFlags {
     globalVersion        = Flag False,
@@ -282,6 +284,7 @@ data ConfigFlags = ConfigFlags {
 
 instance Binary ConfigFlags
 instance Structured ConfigFlags
+instance Inspectable ConfigFlags
 
 -- | More convenient version of 'configPrograms'. Results in an
 -- 'error' if internal invariant is violated.
@@ -851,6 +854,8 @@ data CopyFlags = CopyFlags {
   }
   deriving (Show, Generic)
 
+instance Inspectable CopyFlags
+
 defaultCopyFlags :: CopyFlags
 defaultCopyFlags  = CopyFlags {
     copyDest      = Flag NoCopyDest,
@@ -939,6 +944,8 @@ data InstallFlags = InstallFlags {
   }
   deriving (Show, Generic)
 
+instance Inspectable InstallFlags
+
 defaultInstallFlags :: InstallFlags
 defaultInstallFlags  = InstallFlags {
     installPackageDB = NoFlag,
@@ -1023,6 +1030,8 @@ data SDistFlags = SDistFlags {
   }
   deriving (Show, Generic, Typeable)
 
+instance Inspectable SDistFlags
+
 defaultSDistFlags :: SDistFlags
 defaultSDistFlags = SDistFlags {
     sDistSnapshot    = Flag False,
@@ -1095,6 +1104,8 @@ data RegisterFlags = RegisterFlags {
     regCabalFilePath :: Flag FilePath
   }
   deriving (Show, Generic, Typeable)
+
+instance Inspectable RegisterFlags
 
 defaultRegisterFlags :: RegisterFlags
 defaultRegisterFlags = RegisterFlags {
@@ -1210,6 +1221,8 @@ data HscolourFlags = HscolourFlags {
     }
   deriving (Show, Generic, Typeable)
 
+instance Inspectable HscolourFlags
+
 emptyHscolourFlags :: HscolourFlags
 emptyHscolourFlags = mempty
 
@@ -1311,6 +1324,7 @@ data HaddockTarget = ForHackage | ForDevelopment deriving (Eq, Show, Generic, Ty
 
 instance Binary HaddockTarget
 instance Structured HaddockTarget
+instance Inspectable HaddockTarget
 
 instance Pretty HaddockTarget where
     pretty ForHackage     = Disp.text "for-hackage"
@@ -1344,6 +1358,8 @@ data HaddockFlags = HaddockFlags {
     haddockArgs         :: [String]
   }
   deriving (Show, Generic, Typeable)
+
+instance Inspectable HaddockFlags
 
 defaultHaddockFlags :: HaddockFlags
 defaultHaddockFlags  = HaddockFlags {
@@ -1576,6 +1592,8 @@ data BuildFlags = BuildFlags {
   }
   deriving (Read, Show, Generic, Typeable)
 
+instance Inspectable BuildFlags
+
 defaultBuildFlags :: BuildFlags
 defaultBuildFlags  = BuildFlags {
     buildProgramPaths = mempty,
@@ -1767,6 +1785,7 @@ data TestShowDetails = Never | Failures | Always | Streaming | Direct
 
 instance Binary TestShowDetails
 instance Structured TestShowDetails
+instance Inspectable TestShowDetails
 
 knownTestShowDetails :: [TestShowDetails]
 knownTestShowDetails = [minBound..maxBound]
@@ -1803,6 +1822,8 @@ data TestFlags = TestFlags {
     -- TODO: think about if/how options are passed to test exes
     testOptions     :: [PathTemplate]
   } deriving (Show, Generic, Typeable)
+
+instance Inspectable TestFlags
 
 defaultTestFlags :: TestFlags
 defaultTestFlags  = TestFlags {
@@ -1923,6 +1944,8 @@ data BenchmarkFlags = BenchmarkFlags {
     benchmarkVerbosity :: Flag Verbosity,
     benchmarkOptions   :: [PathTemplate]
   } deriving (Show, Generic, Typeable)
+
+instance Inspectable BenchmarkFlags
 
 defaultBenchmarkFlags :: BenchmarkFlags
 defaultBenchmarkFlags  = BenchmarkFlags {
@@ -2155,7 +2178,9 @@ optionNumJobs get set =
 data ShowBuildInfoFlags = ShowBuildInfoFlags
   { buildInfoBuildFlags :: BuildFlags
   , buildInfoOutputFile :: Maybe FilePath
-  } deriving (Show, Typeable)
+  } deriving (Show, Typeable, Generic)
+
+instance Inspectable ShowBuildInfoFlags
 
 defaultShowBuildFlags  :: ShowBuildInfoFlags
 defaultShowBuildFlags =

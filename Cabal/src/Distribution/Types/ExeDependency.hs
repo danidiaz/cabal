@@ -28,6 +28,7 @@ data ExeDependency = ExeDependency
 
 instance Binary ExeDependency
 instance Structured ExeDependency
+instance Inspectable ExeDependency
 instance NFData ExeDependency where rnf = genericRnf
 
 instance Pretty ExeDependency where

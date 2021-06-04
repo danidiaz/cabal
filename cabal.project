@@ -59,3 +59,4 @@ package cabal-install-solver
 
 package cabal-install
   ghc-options: -fno-ignore-asserts
+

@@ -40,6 +40,7 @@ data OptionalStanza
     | BenchStanzas
   deriving (Eq, Ord, Enum, Bounded, Show, Generic, Typeable)
 
+
 -- | String representation of an OptionalStanza.
 showStanza :: OptionalStanza -> String
 showStanza TestStanzas  = "test"
@@ -59,13 +60,15 @@ enableStanzas optionalStanzas = ComponentRequestedSpec
 
 instance Binary OptionalStanza
 instance Structured OptionalStanza
+instance Inspectable OptionalStanza
 
 -------------------------------------------------------------------------------
 -- OptionalStanzaSet
 -------------------------------------------------------------------------------
 
 newtype OptionalStanzaSet = OptionalStanzaSet Word
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic)
+instance Inspectable OptionalStanzaSet
 
 instance Binary OptionalStanzaSet where
     put (OptionalStanzaSet w) = put w
@@ -121,6 +124,7 @@ data OptionalStanzaMap a = OptionalStanzaMap a a
 
 instance Binary a => Binary (OptionalStanzaMap a)
 instance Structured a => Structured (OptionalStanzaMap a)
+instance Inspectable a => Inspectable (OptionalStanzaMap a)
 
 optStanzaTabulate :: (OptionalStanza -> a) -> OptionalStanzaMap a
 optStanzaTabulate f = OptionalStanzaMap (f TestStanzas) (f BenchStanzas)

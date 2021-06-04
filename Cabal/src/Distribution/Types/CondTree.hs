@@ -31,6 +31,7 @@ import Distribution.Types.Condition
 import qualified Distribution.Compat.Lens as L
 
 
+
 -- | A 'CondTree' is used to represent the conditional structure of
 -- a Cabal file, reflecting a syntax element subject to constraints,
 -- and then any number of sub-elements which may be enabled subject
@@ -65,6 +66,7 @@ data CondTree v c a = CondNode
 
 instance (Binary v, Binary c, Binary a) => Binary (CondTree v c a)
 instance (Structured v, Structured c, Structured a) => Structured (CondTree v c a)
+instance (Inspectable v, Inspectable c, Inspectable a) => Inspectable (CondTree v c a)
 instance (NFData v, NFData c, NFData a) => NFData (CondTree v c a) where rnf = genericRnf
 
 -- | A 'CondBranch' represents a conditional branch, e.g., @if
@@ -77,6 +79,8 @@ data CondBranch v c a = CondBranch
     , condBranchIfFalse   :: Maybe (CondTree v c a)
     }
     deriving (Show, Eq, Typeable, Data, Generic, Functor, Traversable)
+
+instance (Inspectable v, Inspectable c, Inspectable a) => Inspectable (CondBranch v c a)
 
 -- This instance is written by hand because GHC 8.0.1/8.0.2 infinite
 -- loops when trying to derive it with optimizations.  See

@@ -1,11 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 -- | cabal-install CLI command: build
 --
 module Distribution.Client.CmdBuild (
     -- * The @build@ CLI and action
     buildCommand,
-    buildAction,
-
+    BuildAction (..),
+    makeBuildAction,
     -- * Internals exposed for testing
     selectPackageTargets,
     selectComponentTarget
@@ -30,9 +32,9 @@ import Distribution.Verbosity
          ( normal )
 import Distribution.Simple.Utils
          ( wrapText, die' )
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
 
 import qualified Data.Map as Map
-
 
 buildCommand :: CommandUI (NixStyleFlags BuildFlags)
 buildCommand = CommandUI {
@@ -78,7 +80,8 @@ buildCommand = CommandUI {
 
 data BuildFlags = BuildFlags
     { buildOnlyConfigure  :: Flag Bool
-    }
+    } deriving Generic
+instance Inspectable BuildFlags   
 
 defaultBuildFlags :: BuildFlags
 defaultBuildFlags = BuildFlags
@@ -92,8 +95,26 @@ defaultBuildFlags = BuildFlags
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-buildAction :: NixStyleFlags BuildFlags -> [String] -> GlobalFlags -> IO ()
-buildAction flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStrings globalFlags = do
+newtype BuildAction = BuildAction { buildAction :: NixStyleFlags BuildFlags -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable BuildAction
+
+makeBuildAction :: ( Has RunProjectPreBuildPhase cc
+                   , Has RunProjectBuildPhase cc 
+                   , Has RunProjectPostBuildPhase cc 
+                   )
+                => cc 
+                -> BuildAction
+makeBuildAction cc = BuildAction $ makeBuildAction_ cc
+
+-- Having to write this auxiliary function with a full signature outside makeBuildAction
+-- is annoying, but seems necessary for the original where bindings to work unchanged. 
+makeBuildAction_ :: ( Has RunProjectPreBuildPhase cc
+                    , Has RunProjectBuildPhase cc 
+                    , Has RunProjectPostBuildPhase cc 
+                    )
+                 => cc -> Function BuildAction
+makeBuildAction_ cc flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStrings globalFlags = do
     -- TODO: This flags defaults business is ugly
     let onlyConfigure = fromFlag (buildOnlyConfigure defaultBuildFlags
                                  <> buildOnlyConfigure buildFlags)
@@ -108,7 +129,7 @@ buildAction flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStrings glo
       =<< readTargetSelectors (localPackages baseCtx) Nothing targetStrings
 
     buildCtx <-
-      runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
 
             -- Interpret the targets on the command line as build targets
             -- (as opposed to say repl or haddock targets).
@@ -135,8 +156,8 @@ buildAction flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStrings glo
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase verbosity baseCtx buildCtx
-    runProjectPostBuildPhase verbosity baseCtx buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
+    runProjectPostBuildPhase (has cc) verbosity baseCtx buildCtx buildOutcomes
   where
     verbosity = fromFlagOrDefault normal (configVerbosity configFlags)
     cliConfig = commandLineFlagsToProjectConfig globalFlags flags

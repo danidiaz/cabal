@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
 
@@ -112,13 +113,19 @@ explainGlobSyntaxError filepath VersionDoesNotSupportGlob =
   ++ "versions then list all the files explicitly."
 
 data IsRecursive = Recursive | NonRecursive
+    deriving Generic
+instance Inspectable IsRecursive
 
 data MultiDot = MultiDotDisabled | MultiDotEnabled
+    deriving Generic
+instance Inspectable MultiDot
 
 data Glob
   = GlobStem FilePath Glob
     -- ^ A single subdirectory component + remainder.
   | GlobFinal GlobFinal
+  deriving Generic
+instance Inspectable Glob
 
 data GlobFinal
   = FinalMatch IsRecursive MultiDot String
@@ -127,6 +134,8 @@ data GlobFinal
     --   Third argument: the extensions to accept.
   | FinalLit FilePath
     -- ^ Literal file name.
+  deriving Generic 
+instance Inspectable GlobFinal
 
 reconstructGlob :: Glob -> FilePath
 reconstructGlob (GlobStem dir glob) =

@@ -72,6 +72,7 @@ data ProgramSearchPathEntry =
 
 instance Binary ProgramSearchPathEntry
 instance Structured ProgramSearchPathEntry
+instance Inspectable ProgramSearchPathEntry
 
 defaultProgramSearchPath :: ProgramSearchPath
 defaultProgramSearchPath = [ProgramSearchPathDefault]

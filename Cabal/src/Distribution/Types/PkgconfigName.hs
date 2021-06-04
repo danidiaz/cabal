@@ -23,6 +23,8 @@ import qualified Text.PrettyPrint as Disp
 newtype PkgconfigName = PkgconfigName ShortText
     deriving (Generic, Read, Show, Eq, Ord, Typeable, Data)
 
+instance Inspectable PkgconfigName
+
 -- | Convert 'PkgconfigName' to 'String'
 --
 -- @since 2.0.0.2

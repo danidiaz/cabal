@@ -26,6 +26,8 @@ import Distribution.Parsec
 newtype PackageName = PackageName ShortText
     deriving (Generic, Read, Show, Eq, Ord, Typeable, Data)
 
+instance Inspectable PackageName
+
 -- | Convert 'PackageName' to 'String'
 unPackageName :: PackageName -> String
 unPackageName (PackageName s) = fromShortText s

@@ -35,6 +35,7 @@ instance L.HasBuildInfo TestSuite where
 
 instance Binary TestSuite
 instance Structured TestSuite
+instance Inspectable TestSuite
 
 instance NFData TestSuite where rnf = genericRnf
 

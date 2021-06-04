@@ -81,9 +81,12 @@ data Program = Program {
        -- from a commandline. Used to limit the volatility of dependency hashes
        -- when using new-build.
        programNormaliseArgs :: Maybe Version -> PackageDescription -> [String] -> [String]
-     }
+     } deriving Generic
+
 instance Show Program where
   show (Program name _ _ _ _) = "Program: " ++ name
+
+instance Inspectable Program
 
 type ProgArg = String
 
@@ -135,6 +138,7 @@ data ConfiguredProgram = ConfiguredProgram {
 
 instance Binary ConfiguredProgram
 instance Structured ConfiguredProgram
+instance Inspectable ConfiguredProgram
 
 -- | Where a program was found. Also tells us whether it's specified by user or
 -- not.  This includes not just the path, but the program as well.
@@ -148,6 +152,7 @@ data ProgramLocation
 
 instance Binary ProgramLocation
 instance Structured ProgramLocation
+instance Inspectable ProgramLocation
 
 -- | The full path of a configured program.
 programPath :: ConfiguredProgram -> FilePath

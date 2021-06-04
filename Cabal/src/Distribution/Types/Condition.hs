@@ -20,6 +20,8 @@ data Condition c = Var c
                  | CAnd (Condition c) (Condition c)
     deriving (Show, Eq, Typeable, Data, Generic)
 
+instance Inspectable c => Inspectable (Condition c)
+
 -- | Boolean negation of a 'Condition' value.
 cNot :: Condition a -> Condition a
 cNot (Lit b)  = Lit (not b)

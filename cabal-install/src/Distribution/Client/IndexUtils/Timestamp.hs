@@ -36,6 +36,8 @@ import qualified Text.PrettyPrint                as Disp
 newtype Timestamp = TS Int64 -- Tar.EpochTime
                   deriving (Eq,Ord,Enum,NFData,Show,Generic)
 
+instance Inspectable Timestamp
+
 epochTimeToTimestamp :: Tar.EpochTime -> Maybe Timestamp
 epochTimeToTimestamp et
   | ts == nullTimestamp  = Nothing

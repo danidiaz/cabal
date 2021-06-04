@@ -62,6 +62,11 @@ instance Structured FilePathRoot
 instance Structured FilePathGlobRel
 instance Structured GlobPiece
 
+instance Inspectable FilePathGlob
+instance Inspectable FilePathRoot
+instance Inspectable FilePathGlobRel
+instance Inspectable GlobPiece
+
 -- | Check if a 'FilePathGlob' doesn't actually make use of any globbing and
 -- is in fact equivalent to a non-glob 'FilePath'.
 --

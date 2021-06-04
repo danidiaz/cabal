@@ -35,6 +35,7 @@ instance L.HasBuildInfo Library where
 
 instance Binary Library
 instance Structured Library
+instance Inspectable Library
 instance NFData Library where rnf = genericRnf
 
 emptyLibrary :: Library

@@ -9,9 +9,13 @@
 -------------------------------------------------------------------------------
 
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Distribution.Client.CmdExec
-  ( execAction
-  , execCommand
+  (
+    execCommand,
+    ExecAction (..),
+    makeExecAction
   ) where
 
 import Distribution.Client.DistDirLayout
@@ -29,7 +33,7 @@ import Distribution.Client.Setup
   )
 import Distribution.Client.ProjectOrchestration
   ( ProjectBuildContext(..)
-  , runProjectPreBuildPhase
+  , RunProjectPreBuildPhase(..)
   , CurrentCommand(..)
   , establishProjectBaseContext
   , distDirLayout
@@ -94,6 +98,9 @@ import Distribution.Client.Compat.Prelude
 import qualified Data.Set as S
 import qualified Data.Map as M
 
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has (has))
+
+
 execCommand :: CommandUI (NixStyleFlags ())
 execCommand = CommandUI
   { commandName = "v2-exec"
@@ -120,8 +127,21 @@ execCommand = CommandUI
   , commandDefaultFlags = defaultNixStyleFlags ()
   }
 
-execAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-execAction flags@NixStyleFlags {..} extraArgs globalFlags = do
+
+newtype ExecAction = ExecAction { execAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable ExecAction
+
+makeExecAction :: ( Has RunProjectPreBuildPhase cc
+                  )
+               => cc 
+               -> ExecAction
+makeExecAction cc = ExecAction $ makeExecAction_ cc
+
+makeExecAction_ :: ( Has RunProjectPreBuildPhase cc
+                   )
+                => cc -> Function ExecAction
+makeExecAction_ cc flags@NixStyleFlags {..} extraArgs globalFlags = do
 
   baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 
@@ -129,6 +149,7 @@ execAction flags@NixStyleFlags {..} extraArgs globalFlags = do
   -- dependency tree that we've already built. So first we set up an install
   -- plan, but we walk the dependency tree without first executing the plan.
   buildCtx <- runProjectPreBuildPhase
+    (has cc)  
     verbosity
     baseCtx
     (\plan -> return (plan, M.empty))

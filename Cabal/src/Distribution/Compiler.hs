@@ -71,6 +71,7 @@ data CompilerFlavor =
 instance Binary CompilerFlavor
 instance Structured CompilerFlavor
 instance NFData CompilerFlavor where rnf = genericRnf
+instance Inspectable CompilerFlavor
 
 knownCompilerFlavors :: [CompilerFlavor]
 knownCompilerFlavors =
@@ -130,6 +131,7 @@ data PerCompilerFlavor v = PerCompilerFlavor v v
 
 instance Binary a => Binary (PerCompilerFlavor a)
 instance Structured a => Structured (PerCompilerFlavor a)
+instance Inspectable a => Inspectable (PerCompilerFlavor a)
 instance NFData a => NFData (PerCompilerFlavor a)
 
 perCompilerFlavorToList :: PerCompilerFlavor v -> [(CompilerFlavor, v)]
@@ -153,6 +155,7 @@ data CompilerId = CompilerId CompilerFlavor Version
 instance Binary CompilerId
 instance Structured CompilerId
 instance NFData CompilerId where rnf = genericRnf
+instance Inspectable CompilerId
 
 instance Pretty CompilerId where
   pretty (CompilerId f v)
@@ -201,6 +204,7 @@ data AbiTag
 
 instance Binary AbiTag
 instance Structured AbiTag
+instance Inspectable AbiTag
 
 instance Pretty AbiTag where
   pretty NoAbiTag     = Disp.empty

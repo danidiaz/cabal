@@ -94,6 +94,7 @@ instance Bounded Verbosity where
 
 instance Binary Verbosity
 instance Structured Verbosity
+instance Inspectable Verbosity
 
 -- We shouldn't print /anything/ unless an error occurs in silent mode
 silent :: Verbosity

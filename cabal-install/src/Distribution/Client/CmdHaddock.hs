@@ -1,12 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | cabal-install CLI command: haddock
 --
 module Distribution.Client.CmdHaddock (
     -- * The @haddock@ CLI and action
     haddockCommand,
-    haddockAction,
-
+    HaddockAction (..),
+    makeHaddockAction,
     -- * Internals exposed for testing
     selectPackageTargets,
     selectComponentTarget
@@ -31,6 +33,7 @@ import Distribution.Verbosity
          ( normal )
 import Distribution.Simple.Utils
          ( wrapText, die' )
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has (has))
 
 haddockCommand :: CommandUI (NixStyleFlags ())
 haddockCommand = CommandUI {
@@ -69,15 +72,31 @@ haddockCommand = CommandUI {
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-haddockAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-haddockAction flags@NixStyleFlags {..} targetStrings globalFlags = do
+newtype HaddockAction = HaddockAction { haddockAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable HaddockAction
+
+makeHaddockAction :: ( Has RunProjectPreBuildPhase cc
+                     , Has RunProjectBuildPhase cc 
+                     , Has RunProjectPostBuildPhase cc 
+                     )
+                  => cc 
+                  -> HaddockAction
+makeHaddockAction cc = HaddockAction $ makeHaddockAction_ cc
+
+makeHaddockAction_ :: ( Has RunProjectPreBuildPhase cc
+                      , Has RunProjectBuildPhase cc 
+                      , Has RunProjectPostBuildPhase cc 
+                      )
+                   => cc -> Function HaddockAction
+makeHaddockAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
     baseCtx <- establishProjectBaseContext verbosity cliConfig HaddockCommand
 
     targetSelectors <- either (reportTargetSelectorProblems verbosity) return
                    =<< readTargetSelectors (localPackages baseCtx) Nothing targetStrings
 
     buildCtx <-
-      runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx)) $
               die' verbosity
@@ -101,8 +120,8 @@ haddockAction flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase verbosity baseCtx buildCtx
-    runProjectPostBuildPhase verbosity baseCtx buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
+    runProjectPostBuildPhase (has cc) verbosity baseCtx buildCtx buildOutcomes
   where
     verbosity = fromFlagOrDefault normal (configVerbosity configFlags)
     cliConfig = commandLineFlagsToProjectConfig globalFlags flags mempty -- ClientInstallFlags, not needed here

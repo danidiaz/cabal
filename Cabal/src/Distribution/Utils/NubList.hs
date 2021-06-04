@@ -1,6 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable  #-}
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE UndecidableInstances    #-}
 module Distribution.Utils.NubList
     ( NubList    -- opaque
     , toNubList  -- smart construtor
@@ -17,6 +19,7 @@ import Distribution.Compat.Prelude
 import Prelude ()
 
 import Distribution.Simple.Utils
+import qualified Distribution.Simple.Utils.Inspectable as I
 
 import qualified Text.Read as R
 
@@ -24,6 +27,8 @@ import qualified Text.Read as R
 newtype NubList a =
     NubList { fromNubList :: [a] }
     deriving (Eq, Generic, Typeable)
+
+instance I.InspectableString (I.IsTheElementChar a) a => I.Inspectable (NubList a)
 
 -- NubList assumes that nub retains the list order while removing duplicate
 -- elements (keeping the first occurrence). Documentation for "Data.List.nub"

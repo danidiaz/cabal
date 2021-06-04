@@ -24,6 +24,7 @@ data TestType = TestTypeExe Version     -- ^ \"type: exitcode-stdio-x.y\"
 
 instance Binary TestType
 instance Structured TestType
+instance Inspectable TestType
 
 instance NFData TestType where rnf = genericRnf
 

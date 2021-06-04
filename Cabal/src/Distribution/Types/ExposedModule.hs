@@ -42,4 +42,5 @@ instance Parsec ExposedModule where
 
 instance Binary ExposedModule
 instance Structured ExposedModule
+instance Inspectable ExposedModule
 instance NFData ExposedModule where rnf = genericRnf

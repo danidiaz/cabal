@@ -21,5 +21,6 @@ data ConfVar = OS OS
 
 instance Binary ConfVar
 instance Structured ConfVar
+instance Inspectable ConfVar
 
 instance NFData ConfVar where rnf = genericRnf

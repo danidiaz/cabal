@@ -40,6 +40,7 @@ data TotalIndexState = TIS RepoIndexState (Map RepoName RepoIndexState)
 
 instance Binary TotalIndexState
 instance Structured TotalIndexState
+instance Inspectable TotalIndexState
 instance NFData TotalIndexState
 
 instance Pretty TotalIndexState where
@@ -126,6 +127,7 @@ data RepoIndexState
 
 instance Binary RepoIndexState
 instance Structured RepoIndexState
+instance Inspectable RepoIndexState
 instance NFData RepoIndexState
 
 instance Pretty RepoIndexState where

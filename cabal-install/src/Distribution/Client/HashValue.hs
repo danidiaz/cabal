@@ -46,6 +46,7 @@ newtype HashValue = HashValue BS.ByteString
 -- Therefore, we simply derive this structurally.
 instance Binary HashValue
 instance Structured HashValue
+instance Inspectable HashValue
 
 -- | Hash some data. Currently uses SHA256.
 --

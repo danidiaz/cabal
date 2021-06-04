@@ -30,6 +30,7 @@ instance Parsec ExecutableScope where
 
 instance Binary ExecutableScope
 instance Structured ExecutableScope
+instance Inspectable ExecutableScope
 instance NFData ExecutableScope where rnf = genericRnf
 
 -- | 'Any' like semigroup, where 'ExecutablePrivate' is 'Any True'

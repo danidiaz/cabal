@@ -13,6 +13,7 @@ data VerbosityLevel = Silent | Normal | Verbose | Deafening
 
 instance Binary VerbosityLevel
 instance Structured VerbosityLevel
+instance Inspectable VerbosityLevel
 
 data VerbosityFlag
     = VCallStack
@@ -25,3 +26,6 @@ data VerbosityFlag
 
 instance Binary VerbosityFlag
 instance Structured VerbosityFlag
+instance Inspectable VerbosityFlag
+
+

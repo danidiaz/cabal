@@ -30,6 +30,8 @@ import qualified Text.PrettyPrint                as Disp
 newtype ActiveRepos = ActiveRepos [ActiveRepoEntry]
   deriving (Eq, Show, Generic)
 
+instance Inspectable ActiveRepos
+
 defaultActiveRepos :: ActiveRepos
 defaultActiveRepos = ActiveRepos [ ActiveRepoRest CombineStrategyMerge ]
 
@@ -84,6 +86,7 @@ data ActiveRepoEntry
 
 instance Binary ActiveRepoEntry
 instance Structured ActiveRepoEntry
+instance Inspectable ActiveRepoEntry
 instance NFData ActiveRepoEntry
 
 instance Pretty ActiveRepoEntry where
@@ -118,6 +121,7 @@ data CombineStrategy
 
 instance Binary CombineStrategy
 instance Structured CombineStrategy
+instance Inspectable CombineStrategy
 instance NFData CombineStrategy
 
 instance Pretty CombineStrategy where

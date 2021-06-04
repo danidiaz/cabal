@@ -30,6 +30,7 @@ data Module =
 
 instance Binary Module
 instance Structured Module
+instance Inspectable Module
 
 instance Pretty Module where
     pretty (Module uid mod_name) =

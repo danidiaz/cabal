@@ -32,6 +32,8 @@ import Text.PrettyPrint (text)
 newtype ComponentId = ComponentId ShortText
     deriving (Generic, Read, Show, Eq, Ord, Typeable, Data)
 
+instance Inspectable ComponentId
+
 -- | Construct a 'ComponentId' from a 'String'
 --
 -- 'mkComponentId' is the inverse to 'unComponentId'

@@ -42,6 +42,8 @@ data Dependency = Dependency
                     -- It does not affect the cabal-install solver yet.
                   deriving (Generic, Read, Show, Eq, Typeable, Data)
 
+instance Inspectable Dependency
+
 depPkgName :: Dependency -> PackageName
 depPkgName (Dependency pn _ _) = pn
 

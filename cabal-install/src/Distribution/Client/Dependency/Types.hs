@@ -27,6 +27,9 @@ instance Binary Solver
 instance Structured PreSolver
 instance Structured Solver
 
+instance Inspectable PreSolver
+instance Inspectable Solver
+
 instance Pretty PreSolver where
     pretty AlwaysModular = text "modular"
 

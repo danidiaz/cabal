@@ -1,10 +1,11 @@
-{-# LANGUAGE NamedFieldPuns, RecordWildCards #-}
+{-# LANGUAGE NamedFieldPuns, RecordWildCards, FlexibleContexts, DeriveGeneric #-}
 
 -- | cabal-install CLI command: freeze
 --
 module Distribution.Client.CmdFreeze (
     freezeCommand,
-    freezeAction,
+    FreezeAction (..),
+    makeFreezeAction,
   ) where
 
 import Distribution.Client.Compat.Prelude
@@ -51,6 +52,8 @@ import qualified Data.Map as Map
 import Distribution.Simple.Command
          ( CommandUI(..), usageAlternatives )
 
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+
 freezeCommand :: CommandUI (NixStyleFlags ())
 freezeCommand = CommandUI {
   commandName         = "v2-freeze",
@@ -95,8 +98,22 @@ freezeCommand = CommandUI {
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-freezeAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-freezeAction flags@NixStyleFlags {..} extraArgs globalFlags = do
+newtype FreezeAction = FreezeAction { freezeAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable FreezeAction
+
+makeFreezeAction :: ( Has RunProjectBuildPhase cc,
+                      Has RebuildInstallPlan cc
+                    )
+                 => cc 
+                 -> FreezeAction
+makeFreezeAction cc = FreezeAction $ makeFreezeAction_ cc
+
+makeFreezeAction_ :: ( Has RunProjectBuildPhase cc,
+                       Has RebuildInstallPlan cc
+                     )
+                  => cc -> Function FreezeAction
+makeFreezeAction_ cc flags@NixStyleFlags {..} extraArgs globalFlags = do
 
     unless (null extraArgs) $
       die' verbosity $ "'freeze' doesn't take any extra arguments: "
@@ -111,7 +128,8 @@ freezeAction flags@NixStyleFlags {..} extraArgs globalFlags = do
     } <- establishProjectBaseContext verbosity cliConfig OtherCommand
 
     (_, elaboratedPlan, _, totalIndexState, activeRepos) <-
-      rebuildInstallPlan verbosity
+      rebuildInstallPlan (has cc)
+                         verbosity
                          distDirLayout cabalDirLayout
                          projectConfig
                          localPackages

@@ -25,6 +25,7 @@ unRepoName (RepoName n) = n
 
 instance Binary RepoName
 instance Structured RepoName
+instance Inspectable RepoName
 instance NFData RepoName
 
 instance Pretty RepoName where

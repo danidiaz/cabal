@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 -- | Command line options for nix-style / v2 commands.
 --
 -- The commands take a lot of the same options, which affect how install plan
@@ -31,6 +32,9 @@ data NixStyleFlags a = NixStyleFlags
     , projectFlags   :: ProjectFlags
     , extraFlags     :: a
     }
+    deriving Generic
+
+instance Inspectable a => Inspectable (NixStyleFlags a)
 
 nixStyleOptions
     :: (ShowOrParseArgs -> [OptionField a])
