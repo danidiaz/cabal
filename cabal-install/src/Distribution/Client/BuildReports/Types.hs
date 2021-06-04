@@ -28,6 +28,7 @@ import Distribution.Compiler           (CompilerId (..))
 import Distribution.PackageDescription (FlagAssignment)
 import Distribution.System             (Arch, OS)
 import Distribution.Types.PackageId    (PackageIdentifier)
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 -------------------------------------------------------------------------------
 -- ReportLevel
@@ -38,6 +39,7 @@ data ReportLevel = NoReports | AnonymousReports | DetailedReports
 
 instance Binary ReportLevel
 instance Structured ReportLevel
+instance Inspectable ReportLevel
 
 instance Pretty ReportLevel where
   pretty NoReports        = Disp.text "none"

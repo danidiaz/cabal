@@ -58,6 +58,7 @@ import Distribution.Package
 import Distribution.System
 import Distribution.Compiler
 import Distribution.Simple.InstallDirs.Internal
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 import System.Directory (getAppUserDataDirectory)
 import System.FilePath
@@ -103,6 +104,7 @@ data InstallDirs dir = InstallDirs {
 
 instance Binary dir => Binary (InstallDirs dir)
 instance Structured dir => Structured (InstallDirs dir)
+instance Inspectable dir => Inspectable (InstallDirs dir)
 
 instance (Semigroup dir, Monoid dir) => Monoid (InstallDirs dir) where
   mempty = gmempty
@@ -313,6 +315,7 @@ data CopyDest
   deriving (Eq, Show, Generic)
 
 instance Binary CopyDest
+instance Inspectable CopyDest
 
 -- | Check which of the paths are relative to the installation $prefix.
 --
@@ -358,6 +361,7 @@ newtype PathTemplate = PathTemplate [PathComponent]
 
 instance Binary PathTemplate
 instance Structured PathTemplate
+instance Inspectable PathTemplate
 
 type PathTemplateEnv = [(PathTemplateVariable, PathTemplate)]
 

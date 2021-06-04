@@ -13,6 +13,7 @@ import Prelude ()
 import Distribution.Parsec
 import Distribution.Pretty
 import Distribution.Types.PackageName
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- | An unqualified component name, for any kind of component.
 --
@@ -24,6 +25,8 @@ import Distribution.Types.PackageName
 newtype UnqualComponentName = UnqualComponentName ShortText
   deriving (Generic, Read, Show, Eq, Ord, Typeable, Data,
             Semigroup, Monoid) -- TODO: bad enabler of bad monoids
+
+instance Inspectable UnqualComponentName
 
 -- | Convert 'UnqualComponentName' to 'String'
 --

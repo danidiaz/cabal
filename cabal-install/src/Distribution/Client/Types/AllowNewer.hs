@@ -21,6 +21,7 @@ import Distribution.Types.Version     (nullVersion)
 
 import qualified Distribution.Compat.CharParsing as P
 import qualified Text.PrettyPrint                as Disp
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 -- $setup
 -- >>> import Distribution.Parsec
@@ -33,9 +34,13 @@ import qualified Text.PrettyPrint                as Disp
 newtype AllowNewer = AllowNewer { unAllowNewer :: RelaxDeps }
                    deriving (Eq, Read, Show, Generic)
 
+instance Inspectable AllowNewer
+
 -- | 'RelaxDeps' in the context of lower bounds (i.e. for @--allow-older@ flag)
 newtype AllowOlder = AllowOlder { unAllowOlder :: RelaxDeps }
                    deriving (Eq, Read, Show, Generic)
+
+instance Inspectable AllowOlder
 
 -- | Generic data type for policy when relaxing bounds in dependencies.
 -- Don't use this directly: use 'AllowOlder' or 'AllowNewer' depending
@@ -59,10 +64,14 @@ data RelaxDeps =
   | RelaxDepsAll
   deriving (Eq, Read, Show, Generic)
 
+instance Inspectable RelaxDeps
+
 -- | Dependencies can be relaxed either for all packages in the install plan, or
 -- only for some packages.
 data RelaxedDep = RelaxedDep !RelaxDepScope !RelaxDepMod !RelaxDepSubject
                 deriving (Eq, Read, Show, Generic)
+
+instance Inspectable RelaxedDep
 
 -- | Specify the scope of a relaxation, i.e. limit which depending
 -- packages are allowed to have their version constraints relaxed.
@@ -74,15 +83,21 @@ data RelaxDepScope = RelaxDepScopeAll
                      -- ^ Apply relaxation to a specific version of a package only
                    deriving (Eq, Read, Show, Generic)
 
+instance Inspectable RelaxDepScope
+
 -- | Modifier for dependency relaxation
 data RelaxDepMod = RelaxDepModNone  -- ^ Default semantics
                  | RelaxDepModCaret -- ^ Apply relaxation only to @^>=@ constraints
                  deriving (Eq, Read, Show, Generic)
 
+instance Inspectable RelaxDepMod
+
 -- | Express whether to relax bounds /on/ @all@ packages, or a single package
 data RelaxDepSubject = RelaxDepSubjectAll
                      | RelaxDepSubjectPkg !PackageName
                      deriving (Eq, Ord, Read, Show, Generic)
+
+instance Inspectable RelaxDepSubject
 
 instance Pretty RelaxedDep where
   pretty (RelaxedDep scope rdmod subj) = case scope of

@@ -35,6 +35,7 @@ import System.FilePath              (pathSeparator)
 import qualified Distribution.Compat.CharParsing as P
 import qualified Distribution.Compat.DList       as DList
 import qualified Text.PrettyPrint                as Disp
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- | A valid Haskell module name.
 --
@@ -46,6 +47,7 @@ unModuleName (ModuleName s) = fromShortText s
 
 instance Binary ModuleName
 instance Structured ModuleName
+instance Inspectable ModuleName
 
 instance NFData ModuleName where
     rnf (ModuleName ms) = rnf ms

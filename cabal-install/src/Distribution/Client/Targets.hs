@@ -98,6 +98,7 @@ import System.Directory
          ( doesFileExist, doesDirectoryExist )
 import Network.URI
          ( URI(..), URIAuth(..), parseAbsoluteURI )
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 -- ------------------------------------------------------------
 -- * User targets
@@ -647,6 +648,7 @@ data UserQualifier =
 
 instance Binary UserQualifier
 instance Structured UserQualifier
+instance Inspectable UserQualifier
 
 -- | Version of 'ConstraintScope' that a user may specify on the
 -- command line.
@@ -663,6 +665,7 @@ data UserConstraintScope =
 
 instance Binary UserConstraintScope
 instance Structured UserConstraintScope
+instance Inspectable UserConstraintScope
 
 fromUserQualifier :: UserQualifier -> Qualifier
 fromUserQualifier UserQualToplevel = QualToplevel
@@ -683,6 +686,7 @@ data UserConstraint =
 
 instance Binary UserConstraint
 instance Structured UserConstraint
+instance Inspectable UserConstraint
 
 userConstraintPackageName :: UserConstraint -> PackageName
 userConstraintPackageName (UserConstraint scope _) = scopePN scope

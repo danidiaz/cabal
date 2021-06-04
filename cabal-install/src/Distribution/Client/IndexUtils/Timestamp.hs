@@ -21,6 +21,7 @@ module Distribution.Client.IndexUtils.Timestamp
     ) where
 
 import Distribution.Client.Compat.Prelude
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 -- read is needed for Text instance
 import Prelude (read)
@@ -35,6 +36,8 @@ import qualified Text.PrettyPrint                as Disp
 -- | UNIX timestamp (expressed in seconds since unix epoch, i.e. 1970).
 newtype Timestamp = TS Int64 -- Tar.EpochTime
                   deriving (Eq,Ord,Enum,NFData,Show,Generic)
+
+instance Inspectable Timestamp
 
 epochTimeToTimestamp :: Tar.EpochTime -> Maybe Timestamp
 epochTimeToTimestamp et

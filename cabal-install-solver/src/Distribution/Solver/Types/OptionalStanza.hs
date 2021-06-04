@@ -30,6 +30,7 @@ import Prelude ()
 import Data.Bits                                 (testBit, (.|.), (.&.))
 import Distribution.Types.ComponentRequestedSpec (ComponentRequestedSpec (..))
 import Distribution.Utils.Structured (Structured (..), nominalStructure)
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -------------------------------------------------------------------------------
 -- OptionalStanza
@@ -39,6 +40,8 @@ data OptionalStanza
     = TestStanzas
     | BenchStanzas
   deriving (Eq, Ord, Enum, Bounded, Show, Generic, Typeable)
+
+instance Inspectable OptionalStanza
 
 -- | String representation of an OptionalStanza.
 showStanza :: OptionalStanza -> String

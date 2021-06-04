@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 -- | Command line options for nix-style / v2 commands.
 --
 -- The commands take a lot of the same options, which affect how install plan
@@ -20,6 +21,7 @@ import Distribution.Client.ProjectFlags
 import Distribution.Client.Setup
        (ConfigExFlags, ConfigFlags (..), InstallFlags (..), benchmarkOptions, configureExOptions,
        configureOptions, haddockOptions, installOptions, liftOptions, testOptions)
+import Distribution.Client.Utils.Inspectable
 
 data NixStyleFlags a = NixStyleFlags
     { configFlags    :: ConfigFlags
@@ -31,6 +33,9 @@ data NixStyleFlags a = NixStyleFlags
     , projectFlags   :: ProjectFlags
     , extraFlags     :: a
     }
+    deriving Generic
+
+instance Inspectable a => Inspectable (NixStyleFlags a)
 
 nixStyleOptions
     :: (ShowOrParseArgs -> [OptionField a])

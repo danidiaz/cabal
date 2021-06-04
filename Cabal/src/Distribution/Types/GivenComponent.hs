@@ -9,6 +9,7 @@ import Distribution.Compat.Prelude
 import Distribution.Types.ComponentId
 import Distribution.Types.LibraryName
 import Distribution.Types.PackageName
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- | A 'GivenComponent' represents a library depended on and explicitly
 -- specified by the user/client with @--dependency@
@@ -26,3 +27,4 @@ data GivenComponent =
 
 instance Binary GivenComponent
 instance Structured GivenComponent
+instance Inspectable GivenComponent

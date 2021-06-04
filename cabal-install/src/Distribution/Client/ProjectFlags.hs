@@ -13,6 +13,8 @@ import Distribution.ReadE          (succeedReadE)
 import Distribution.Simple.Command (MkOptDescr, OptionField, ShowOrParseArgs (..), boolOpt', option, reqArg)
 import Distribution.Simple.Setup   (Flag (..), flagToList, flagToMaybe, toFlag, trueArg)
 
+import Distribution.Client.Utils.Inspectable
+
 data ProjectFlags = ProjectFlags
     { flagProjectFileName :: Flag FilePath
       -- ^ The cabal project file name; defaults to @cabal.project@.
@@ -28,6 +30,8 @@ data ProjectFlags = ProjectFlags
       -- The exact interpretation might be slightly different per command.
     }
   deriving (Show, Generic)
+
+instance Inspectable ProjectFlags
 
 defaultProjectFlags :: ProjectFlags
 defaultProjectFlags = ProjectFlags

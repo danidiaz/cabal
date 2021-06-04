@@ -11,6 +11,7 @@ import Prelude ()
 import Text.PrettyPrint (text)
 
 import qualified Distribution.Compat.CharParsing as P
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 
 -- | All the solvers that can be selected.
@@ -26,6 +27,9 @@ instance Binary Solver
 
 instance Structured PreSolver
 instance Structured Solver
+
+instance Inspectable PreSolver
+instance Inspectable Solver
 
 instance Pretty PreSolver where
     pretty AlwaysModular = text "modular"

@@ -16,6 +16,7 @@ import Distribution.Types.PackageName
 import Distribution.Types.Version
 import Distribution.Types.VersionRange.Internal
 import Distribution.Version                     (simplifyVersionRange)
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 import qualified Distribution.Compat.CharParsing as P
 
@@ -29,6 +30,7 @@ data PackageVersionConstraint = PackageVersionConstraint PackageName VersionRang
 
 instance Binary PackageVersionConstraint
 instance Structured PackageVersionConstraint
+instance Inspectable PackageVersionConstraint
 instance NFData PackageVersionConstraint where rnf = genericRnf
 
 instance Pretty PackageVersionConstraint where

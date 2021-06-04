@@ -5,6 +5,7 @@ module Distribution.Client.Types.WriteGhcEnvironmentFilesPolicy (
 
 import Prelude ()
 import Distribution.Client.Compat.Prelude
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- | Whether 'v2-build' should write a .ghc.environment file after
 -- success. Possible values: 'always', 'never' (the default), 'ghc8.4.4+'
@@ -18,3 +19,4 @@ data WriteGhcEnvironmentFilesPolicy
 
 instance Binary WriteGhcEnvironmentFilesPolicy
 instance Structured WriteGhcEnvironmentFilesPolicy
+instance Inspectable WriteGhcEnvironmentFilesPolicy

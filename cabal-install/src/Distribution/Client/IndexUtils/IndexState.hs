@@ -26,6 +26,7 @@ import Distribution.Parsec (parsecLeadingCommaNonEmpty)
 import qualified Data.Map.Strict                 as Map
 import qualified Distribution.Compat.CharParsing as P
 import qualified Text.PrettyPrint                as Disp
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- $setup
 -- >>> import Distribution.Parsec
@@ -40,6 +41,7 @@ data TotalIndexState = TIS RepoIndexState (Map RepoName RepoIndexState)
 
 instance Binary TotalIndexState
 instance Structured TotalIndexState
+instance Inspectable TotalIndexState
 instance NFData TotalIndexState
 
 instance Pretty TotalIndexState where
@@ -126,6 +128,7 @@ data RepoIndexState
 
 instance Binary RepoIndexState
 instance Structured RepoIndexState
+instance Inspectable RepoIndexState
 instance NFData RepoIndexState
 
 instance Pretty RepoIndexState where

@@ -3,9 +3,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TupleSections     #-}
+{-# LANGUAGE DeriveGeneric     #-}
 module Distribution.Client.CmdListBin (
     listbinCommand,
-    listbinAction,
+    ListbinAction (..),
+    makeListbinAction
 ) where
 
 import Distribution.Client.Compat.Prelude
@@ -42,6 +44,9 @@ import qualified Distribution.Client.InstallPlan         as IP
 import qualified Distribution.Simple.InstallDirs         as InstallDirs
 import qualified Distribution.Solver.Types.ComponentDeps as CD
 
+import Distribution.Client.Instrumentation (Instrumentable)
+import Distribution.Client.Utils.Inspectable (Inspectable)
+
 -------------------------------------------------------------------------------
 -- Command
 -------------------------------------------------------------------------------
@@ -63,8 +68,17 @@ listbinCommand = CommandUI
 -- Action
 -------------------------------------------------------------------------------
 
-listbinAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-listbinAction flags@NixStyleFlags{..} args globalFlags = do
+newtype ListbinAction = ListbinAction { listbinAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable ListbinAction
+
+makeListbinAction :: cc -> ListbinAction
+makeListbinAction cc = ListbinAction $ 
+    \flags targetStrings globalFlags -> 
+    makeListbinAction_ cc flags targetStrings globalFlags
+
+makeListbinAction_ :: cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
+makeListbinAction_ _ flags@NixStyleFlags{..} args globalFlags = do
     -- fail early if multiple target selectors specified
     target <- case args of
         []  -> die' verbosity "One target is required, none provided"

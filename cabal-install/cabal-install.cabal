@@ -97,6 +97,7 @@ library
         Distribution.Client.Compat.Prelude
         Distribution.Client.Compat.Process
         Distribution.Client.Compat.Semaphore
+        Distribution.Client.CompositionContext
         Distribution.Client.Config
         Distribution.Client.Configure
         Distribution.Client.Dependency
@@ -134,6 +135,8 @@ library
         Distribution.Client.Install
         Distribution.Client.InstallPlan
         Distribution.Client.InstallSymlink
+        Distribution.Client.Instrumentation
+        Distribution.Client.Instrumentation.Debugger
         Distribution.Client.JobControl
         Distribution.Client.List
         Distribution.Client.Manpage
@@ -189,6 +192,7 @@ library
         Distribution.Client.Types.WriteGhcEnvironmentFilesPolicy
         Distribution.Client.Upload
         Distribution.Client.Utils
+        Distribution.Client.Utils.Inspectable
         Distribution.Client.Utils.Json
         Distribution.Client.Utils.Parsec
         Distribution.Client.VCS

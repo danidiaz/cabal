@@ -46,6 +46,7 @@ import Distribution.Utils.Generic    (unsnoc)
 import qualified Distribution.Compat.CharParsing as P
 import qualified Distribution.Compat.DList       as DList
 import qualified Text.PrettyPrint                as Disp
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 data VersionRange
   = ThisVersion            Version -- = version
@@ -60,6 +61,7 @@ data VersionRange
 
 instance Binary VersionRange
 instance Structured VersionRange
+instance Inspectable VersionRange
 instance NFData VersionRange where rnf = genericRnf
 
 -- | The version range @-any@. That is, a version range containing all

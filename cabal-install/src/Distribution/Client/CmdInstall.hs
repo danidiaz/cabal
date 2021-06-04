@@ -2,13 +2,15 @@
 {-# LANGUAGE NamedFieldPuns      #-}
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric       #-}
 
 -- | cabal-install CLI command: build
 --
 module Distribution.Client.CmdInstall (
     -- * The @build@ CLI and action
     installCommand,
-    installAction,
+    InstallAction (..),
+    makeInstallAction,
 
     -- * Internals exposed for testing
     selectPackageTargets,
@@ -141,6 +143,9 @@ import System.Directory
 import System.FilePath
          ( (</>), (<.>), takeDirectory, takeBaseName )
 
+import Distribution.Client.Instrumentation (Instrumentable)
+import Distribution.Client.Utils.Inspectable (Inspectable)
+
 installCommand :: CommandUI (NixStyleFlags ClientInstallFlags)
 installCommand = CommandUI
   { commandName         = "v2-install"
@@ -189,8 +194,18 @@ installCommand = CommandUI
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-installAction :: NixStyleFlags ClientInstallFlags -> [String] -> GlobalFlags -> IO ()
-installAction flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targetStrings globalFlags = do
+
+newtype InstallAction = InstallAction { installAction :: NixStyleFlags ClientInstallFlags -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable InstallAction
+
+makeInstallAction :: cc -> InstallAction
+makeInstallAction cc = InstallAction $ 
+    \flags targetStrings globalFlags -> 
+    makeInstallAction_ cc flags targetStrings globalFlags
+
+makeInstallAction_ :: cc -> NixStyleFlags ClientInstallFlags -> [String] -> GlobalFlags -> IO ()
+makeInstallAction_ _ flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targetStrings globalFlags = do
   -- Ensure there were no invalid configuration options specified.
   verifyPreconditionsOrDie verbosity configFlags'
 

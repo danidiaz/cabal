@@ -29,6 +29,7 @@ import Distribution.Version                        (VersionRange, simplifyVersio
 
 import Distribution.Solver.Types.OptionalStanza
 import Distribution.Solver.Types.PackagePath
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 import qualified Text.PrettyPrint as Disp
 
@@ -100,6 +101,7 @@ data PackageProperty
 
 instance Binary PackageProperty
 instance Structured PackageProperty
+instance Inspectable PackageProperty
 
 -- | Pretty-prints a package property.
 dispPackageProperty :: PackageProperty -> Disp.Doc

@@ -49,6 +49,8 @@ import qualified Distribution.Client.Security.DNS           as Sec.DNS
 
 import qualified System.FilePath.Posix as FilePath.Posix
 
+import Distribution.Client.Utils.Inspectable (Inspectable)
+
 -- ------------------------------------------------------------
 -- * Global flags
 -- ------------------------------------------------------------
@@ -72,6 +74,8 @@ data GlobalFlags = GlobalFlags
     , globalStoreDir          :: Flag FilePath
     , globalProgPathExtra     :: NubList FilePath -- ^ Extra program path used for packagedb lookups in a global context (i.e. for http transports)
     } deriving (Show, Generic)
+
+instance Inspectable GlobalFlags
 
 defaultGlobalFlags :: GlobalFlags
 defaultGlobalFlags  = GlobalFlags

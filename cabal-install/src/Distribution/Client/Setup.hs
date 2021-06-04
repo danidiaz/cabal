@@ -135,6 +135,7 @@ import Data.List
          ( deleteFirstsBy )
 import System.FilePath
          ( (</>) )
+import  Distribution.Client.Utils.Inspectable (Inspectable)
 
 globalCommand :: [Command action] -> CommandUI GlobalFlags
 globalCommand commands = CommandUI {
@@ -610,6 +611,8 @@ data ConfigExFlags = ConfigExFlags {
       :: Flag WriteGhcEnvironmentFilesPolicy
   }
   deriving (Eq, Show, Generic)
+
+instance Inspectable ConfigExFlags
 
 defaultConfigExFlags :: ConfigExFlags
 defaultConfigExFlags = mempty { configSolver     = Flag defaultSolver }
@@ -1669,6 +1672,7 @@ data InstallFlags = InstallFlags {
   deriving (Eq, Show, Generic)
 
 instance Binary InstallFlags
+instance Inspectable InstallFlags
 
 defaultInstallFlags :: InstallFlags
 defaultInstallFlags = InstallFlags {

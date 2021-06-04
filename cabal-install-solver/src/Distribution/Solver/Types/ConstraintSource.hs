@@ -5,6 +5,7 @@ module Distribution.Solver.Types.ConstraintSource
     ) where
 
 import Distribution.Solver.Compat.Prelude
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 import Prelude ()
 
 -- | Source of a 'PackageConstraint'.
@@ -57,6 +58,7 @@ data ConstraintSource =
 
 instance Binary ConstraintSource
 instance Structured ConstraintSource
+instance Inspectable ConstraintSource
 
 -- | Description of a 'ConstraintSource'.
 showConstraintSource :: ConstraintSource -> String

@@ -59,6 +59,7 @@ import Distribution.Version (Version, mkVersion', nullVersion)
 import qualified System.Info (compilerName, compilerVersion)
 import Distribution.Parsec (Parsec (..))
 import Distribution.Pretty (Pretty (..), prettyShow)
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 import qualified Distribution.Compat.CharParsing as P
 import qualified Text.PrettyPrint as Disp
 
@@ -71,6 +72,7 @@ data CompilerFlavor =
 instance Binary CompilerFlavor
 instance Structured CompilerFlavor
 instance NFData CompilerFlavor where rnf = genericRnf
+instance Inspectable CompilerFlavor
 
 knownCompilerFlavors :: [CompilerFlavor]
 knownCompilerFlavors =
@@ -153,6 +155,7 @@ data CompilerId = CompilerId CompilerFlavor Version
 instance Binary CompilerId
 instance Structured CompilerId
 instance NFData CompilerId where rnf = genericRnf
+instance Inspectable CompilerId
 
 instance Pretty CompilerId where
   pretty (CompilerId f v)
@@ -201,6 +204,7 @@ data AbiTag
 
 instance Binary AbiTag
 instance Structured AbiTag
+instance Inspectable AbiTag
 
 instance Pretty AbiTag where
   pretty NoAbiTag     = Disp.empty

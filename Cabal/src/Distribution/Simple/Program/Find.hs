@@ -40,6 +40,7 @@ import Distribution.Compat.Prelude
 
 import Distribution.Verbosity
 import Distribution.Simple.Utils
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 import Distribution.System
 import Distribution.Compat.Environment
 
@@ -72,6 +73,7 @@ data ProgramSearchPathEntry =
 
 instance Binary ProgramSearchPathEntry
 instance Structured ProgramSearchPathEntry
+instance Inspectable ProgramSearchPathEntry
 
 defaultProgramSearchPath :: ProgramSearchPath
 defaultProgramSearchPath = [ProgramSearchPathDefault]

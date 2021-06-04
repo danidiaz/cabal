@@ -27,6 +27,7 @@ import Distribution.Types.UnqualComponentName
 
 import qualified Distribution.Compat.NonEmptySet as NES
 import qualified Text.PrettyPrint                as PP
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- | Describes a dependency on a source package (API)
 --
@@ -41,6 +42,8 @@ data Dependency = Dependency
                     -- Only the selected libraries will be built.
                     -- It does not affect the cabal-install solver yet.
                   deriving (Generic, Read, Show, Eq, Typeable, Data)
+
+instance Inspectable Dependency
 
 depPkgName :: Dependency -> PackageName
 depPkgName (Dependency pn _ _) = pn

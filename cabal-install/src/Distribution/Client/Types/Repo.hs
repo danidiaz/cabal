@@ -28,6 +28,7 @@ import qualified Distribution.Compat.CharParsing as P
 import qualified Text.PrettyPrint                as Disp
 
 import Distribution.Client.Types.RepoName
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 -------------------------------------------------------------------------------
 -- Remote repository
@@ -65,6 +66,7 @@ data RemoteRepo =
 
 instance Binary RemoteRepo
 instance Structured RemoteRepo
+instance Inspectable RemoteRepo
 
 instance Pretty RemoteRepo where
     pretty r =
@@ -107,6 +109,7 @@ data LocalRepo = LocalRepo
 
 instance Binary LocalRepo
 instance Structured LocalRepo
+instance Inspectable LocalRepo
 
 -- | Note: doesn't parse 'localRepoSharedCache' field.
 instance Parsec LocalRepo where

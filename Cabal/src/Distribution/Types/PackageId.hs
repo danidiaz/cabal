@@ -16,6 +16,7 @@ import Distribution.Version           (Version, nullVersion)
 import qualified Data.List.NonEmpty              as NE
 import qualified Distribution.Compat.CharParsing as P
 import qualified Text.PrettyPrint                as Disp
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- | Type alias so we can use the shorter name PackageId.
 type PackageId = PackageIdentifier
@@ -30,6 +31,7 @@ data PackageIdentifier
 
 instance Binary PackageIdentifier
 instance Structured PackageIdentifier
+instance Inspectable PackageIdentifier
 
 instance Pretty PackageIdentifier where
   pretty (PackageIdentifier n v)

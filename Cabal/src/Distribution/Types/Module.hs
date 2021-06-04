@@ -15,6 +15,7 @@ import Distribution.Pretty
 import Distribution.Parsec
 import Distribution.Types.UnitId
 import Distribution.ModuleName
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- | A module identity uniquely identifies a Haskell module by
 -- qualifying a 'ModuleName' with the 'UnitId' which defined
@@ -30,6 +31,7 @@ data Module =
 
 instance Binary Module
 instance Structured Module
+instance Inspectable Module
 
 instance Pretty Module where
     pretty (Module uid mod_name) =

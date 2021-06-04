@@ -3,13 +3,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- | cabal-install CLI command: repl
 --
 module Distribution.Client.CmdRepl (
     -- * The @repl@ CLI and action
     replCommand,
-    replAction,
+    ReplAction (..),
+    makeReplAction,
 
     -- * Internals exposed for testing
     matchesMultipleProblem,
@@ -102,6 +104,9 @@ import Language.Haskell.Extension
 import Distribution.CabalSpecVersion
          ( CabalSpecVersion (..) )
 
+import Distribution.Client.Instrumentation (Instrumentable)
+import Distribution.Client.Utils.Inspectable (Inspectable)
+
 import Data.List
          ( (\\) )
 import qualified Data.Map as Map
@@ -116,7 +121,8 @@ type ReplFlags = [String]
 data EnvFlags = EnvFlags
   { envPackages :: [Dependency]
   , envIncludeTransitive :: Flag Bool
-  }
+  } deriving Generic
+instance Inspectable EnvFlags
 
 defaultEnvFlags :: EnvFlags
 defaultEnvFlags = EnvFlags
@@ -196,8 +202,17 @@ replCommand = Client.installCommand {
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-replAction :: NixStyleFlags (ReplFlags, EnvFlags) -> [String] -> GlobalFlags -> IO ()
-replAction flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..} targetStrings globalFlags = do
+newtype ReplAction = ReplAction { replAction :: NixStyleFlags (ReplFlags, EnvFlags) -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable ReplAction
+
+makeReplAction :: cc -> ReplAction
+makeReplAction cc = ReplAction $ 
+    \flags targetStrings globalFlags -> 
+    makeReplAction_ cc flags targetStrings globalFlags
+
+makeReplAction_ :: cc -> NixStyleFlags (ReplFlags, EnvFlags) -> [String] -> GlobalFlags -> IO ()
+makeReplAction_ _ flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..} targetStrings globalFlags = do
     let
       with           = withProject    cliConfig             verbosity targetStrings
       without config = withoutProject (config <> cliConfig) verbosity targetStrings

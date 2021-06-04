@@ -64,6 +64,7 @@ import Distribution.Parsec
 import Distribution.Pretty
 import Distribution.Verbosity.Internal
 import Distribution.Utils.Generic (isAsciiAlpha)
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 import qualified Data.Set as Set
 import qualified Distribution.Compat.CharParsing as P
@@ -94,6 +95,7 @@ instance Bounded Verbosity where
 
 instance Binary Verbosity
 instance Structured Verbosity
+instance Inspectable Verbosity
 
 -- We shouldn't print /anything/ unless an error occurs in silent mode
 silent :: Verbosity

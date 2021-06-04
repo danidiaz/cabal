@@ -1,12 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- | cabal-install CLI command: test
 --
 module Distribution.Client.CmdTest (
     -- * The @test@ CLI and action
     testCommand,
-    testAction,
-
+    TestAction (..),
+    makeTestAction,
     -- * Internals exposed for testing
     isSubComponentProblem,
     notTestProblem,
@@ -41,6 +42,9 @@ import Distribution.Simple.Utils
          ( notice, wrapText, die' )
 
 import qualified System.Exit (exitSuccess)
+
+import Distribution.Client.Instrumentation (Instrumentable)
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 
 testCommand :: CommandUI (NixStyleFlags ())
@@ -91,8 +95,18 @@ testCommand = CommandUI
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-testAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-testAction flags@NixStyleFlags {..} targetStrings globalFlags = do
+
+newtype TestAction = TestAction { testAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable TestAction
+
+makeTestAction :: cc -> TestAction
+makeTestAction cc = TestAction $ 
+    \flags targetStrings globalFlags -> 
+    makeTestAction_ cc flags targetStrings globalFlags
+
+makeTestAction_ :: cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
+makeTestAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 

@@ -1,11 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- | cabal-install CLI command: bench
 --
 module Distribution.Client.CmdBench (
     -- * The @bench@ CLI and action
     benchCommand,
-    benchAction,
+    BenchAction (..),
+    makeBenchAction,
 
     -- * Internals exposed for testing
     componentNotBenchmarkProblem,
@@ -37,6 +39,9 @@ import Distribution.Verbosity
          ( normal )
 import Distribution.Simple.Utils
          ( wrapText, die' )
+
+import Distribution.Client.Instrumentation (Instrumentable)
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 benchCommand :: CommandUI (NixStyleFlags ())
 benchCommand = CommandUI {
@@ -79,8 +84,17 @@ benchCommand = CommandUI {
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-benchAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-benchAction flags@NixStyleFlags {..} targetStrings globalFlags = do
+newtype BenchAction = BenchAction { benchAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable BenchAction
+
+makeBenchAction :: cc -> BenchAction
+makeBenchAction cc = BenchAction $ 
+    \flags targetStrings globalFlags -> 
+    makeBenchAction_ cc flags targetStrings globalFlags
+
+makeBenchAction_ :: cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
+makeBenchAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 

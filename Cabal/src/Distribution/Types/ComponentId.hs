@@ -9,6 +9,7 @@ module Distribution.Types.ComponentId
 import Prelude ()
 import Distribution.Compat.Prelude
 import Distribution.Utils.ShortText
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 import Distribution.Pretty
 import Distribution.Parsec
@@ -31,6 +32,8 @@ import Text.PrettyPrint (text)
 -- @since 2.0.0.2
 newtype ComponentId = ComponentId ShortText
     deriving (Generic, Read, Show, Eq, Ord, Typeable, Data)
+
+instance Inspectable ComponentId
 
 -- | Construct a 'ComponentId' from a 'String'
 --

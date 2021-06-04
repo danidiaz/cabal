@@ -7,12 +7,14 @@ module Distribution.Verbosity.Internal
 
 import Prelude ()
 import Distribution.Compat.Prelude
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 data VerbosityLevel = Silent | Normal | Verbose | Deafening
     deriving (Generic, Show, Read, Eq, Ord, Enum, Bounded, Typeable)
 
 instance Binary VerbosityLevel
 instance Structured VerbosityLevel
+instance Inspectable VerbosityLevel
 
 data VerbosityFlag
     = VCallStack
@@ -25,3 +27,6 @@ data VerbosityFlag
 
 instance Binary VerbosityFlag
 instance Structured VerbosityFlag
+instance Inspectable VerbosityFlag
+
+

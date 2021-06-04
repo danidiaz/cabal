@@ -22,6 +22,7 @@ import Distribution.Parsec
 
 import qualified Distribution.Compat.CharParsing as P
 import qualified Text.PrettyPrint as Disp
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 data LibraryName = LMainLibName
                  | LSubLibName UnqualComponentName
@@ -29,6 +30,7 @@ data LibraryName = LMainLibName
 
 instance Binary LibraryName
 instance Structured LibraryName
+instance Inspectable LibraryName
 instance NFData LibraryName where rnf = genericRnf
 
 -- | Pretty print 'LibraryName' in build-target-ish syntax.

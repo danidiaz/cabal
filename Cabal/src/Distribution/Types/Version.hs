@@ -27,6 +27,8 @@ import qualified Distribution.Compat.CharParsing as P
 import qualified Text.PrettyPrint                as Disp
 import qualified Text.Read                       as Read
 
+import Distribution.Simple.Utils.Inspectable (Inspectable)
+
 -- | A 'Version' represents the version of a software entity.
 --
 -- Instances of 'Eq' and 'Ord' are provided, which gives exact
@@ -46,6 +48,8 @@ data Version = PV0 {-# UNPACK #-} !Word64
              -- MUST be used. This is essential for the 'Eq' instance
              -- to work.
              deriving (Data,Eq,Generic,Typeable)
+
+instance Inspectable Version
 
 instance Ord Version where
     compare (PV0 x)    (PV0 y)    = compare x y

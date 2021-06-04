@@ -24,6 +24,8 @@ import Distribution.Client.Types.OverwritePolicy
 
 import qualified Distribution.Compat.CharParsing as P
 
+import Distribution.Client.Utils.Inspectable (Inspectable)
+
 data ClientInstallFlags = ClientInstallFlags
   { cinstInstallLibs     :: Flag Bool
   , cinstEnvironmentPath :: Flag FilePath
@@ -31,6 +33,8 @@ data ClientInstallFlags = ClientInstallFlags
   , cinstInstallMethod   :: Flag InstallMethod
   , cinstInstalldir      :: Flag FilePath
   } deriving (Eq, Show, Generic)
+
+instance Inspectable ClientInstallFlags
 
 instance Monoid ClientInstallFlags where
   mempty = gmempty

@@ -9,6 +9,7 @@ import Prelude ()
 
 import qualified Distribution.Compat.CharParsing as P
 import qualified Text.PrettyPrint                as Disp
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- $setup
 -- >>> import Distribution.Parsec
@@ -25,6 +26,7 @@ unRepoName (RepoName n) = n
 
 instance Binary RepoName
 instance Structured RepoName
+instance Inspectable RepoName
 instance NFData RepoName
 
 instance Pretty RepoName where

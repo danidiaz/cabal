@@ -1,12 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- | cabal-install CLI command: haddock
 --
 module Distribution.Client.CmdHaddock (
     -- * The @haddock@ CLI and action
     haddockCommand,
-    haddockAction,
-
+    HaddockAction (..),
+    makeHaddockAction,
     -- * Internals exposed for testing
     selectPackageTargets,
     selectComponentTarget
@@ -31,6 +32,8 @@ import Distribution.Verbosity
          ( normal )
 import Distribution.Simple.Utils
          ( wrapText, die' )
+import Distribution.Client.Instrumentation (Instrumentable)
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 haddockCommand :: CommandUI (NixStyleFlags ())
 haddockCommand = CommandUI {
@@ -69,8 +72,17 @@ haddockCommand = CommandUI {
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-haddockAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-haddockAction flags@NixStyleFlags {..} targetStrings globalFlags = do
+newtype HaddockAction = HaddockAction { haddockAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable HaddockAction
+
+makeHaddockAction :: cc -> HaddockAction
+makeHaddockAction cc = HaddockAction $ 
+    \flags targetStrings globalFlags -> 
+    makeHaddockAction_ cc flags targetStrings globalFlags
+
+makeHaddockAction_ :: cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
+makeHaddockAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
     baseCtx <- establishProjectBaseContext verbosity cliConfig HaddockCommand
 
     targetSelectors <- either (reportTargetSelectorProblems verbosity) return

@@ -1,11 +1,12 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
 -- | cabal-install CLI command: build
 --
 module Distribution.Client.CmdBuild (
     -- * The @build@ CLI and action
     buildCommand,
-    buildAction,
-
+    BuildAction (..),
+    makeBuildAction,
     -- * Internals exposed for testing
     selectPackageTargets,
     selectComponentTarget
@@ -30,9 +31,10 @@ import Distribution.Verbosity
          ( normal )
 import Distribution.Simple.Utils
          ( wrapText, die' )
+import Distribution.Client.Instrumentation (Instrumentable)
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 import qualified Data.Map as Map
-
 
 buildCommand :: CommandUI (NixStyleFlags BuildFlags)
 buildCommand = CommandUI {
@@ -78,7 +80,8 @@ buildCommand = CommandUI {
 
 data BuildFlags = BuildFlags
     { buildOnlyConfigure  :: Flag Bool
-    }
+    } deriving Generic
+instance Inspectable BuildFlags   
 
 defaultBuildFlags :: BuildFlags
 defaultBuildFlags = BuildFlags
@@ -92,8 +95,19 @@ defaultBuildFlags = BuildFlags
 -- For more details on how this works, see the module
 -- "Distribution.Client.ProjectOrchestration"
 --
-buildAction :: NixStyleFlags BuildFlags -> [String] -> GlobalFlags -> IO ()
-buildAction flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStrings globalFlags = do
+newtype BuildAction = BuildAction { buildAction :: NixStyleFlags BuildFlags -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable BuildAction
+
+makeBuildAction :: cc -> BuildAction
+makeBuildAction cc = BuildAction $ 
+    \flags targetStrings globalFlags -> 
+    makeBuildAction_ cc flags targetStrings globalFlags
+
+-- Having to write this auxiliary function with a full signature outside makeBuildAction
+-- is annoying, but seems necessary for the original where bindings to work unchanged. 
+makeBuildAction_ :: cc -> NixStyleFlags BuildFlags -> [String] -> GlobalFlags -> IO () 
+makeBuildAction_ _ flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStrings globalFlags = do
     -- TODO: This flags defaults business is ugly
     let onlyConfigure = fromFlag (buildOnlyConfigure defaultBuildFlags
                                  <> buildOnlyConfigure buildFlags)

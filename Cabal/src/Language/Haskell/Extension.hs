@@ -33,6 +33,7 @@ import Distribution.Parsec
 import Distribution.Pretty
 
 import qualified Distribution.Compat.CharParsing as P
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 import qualified Text.PrettyPrint as Disp
 
 -- ------------------------------------------------------------
@@ -64,6 +65,7 @@ data Language =
 
 instance Binary Language
 instance Structured Language
+instance Inspectable Language
 
 instance NFData Language where rnf = genericRnf
 
@@ -117,6 +119,7 @@ data Extension =
 
 instance Binary Extension
 instance Structured Extension
+instance Inspectable Extension
 
 instance NFData Extension where rnf = genericRnf
 
@@ -867,6 +870,7 @@ data KnownExtension =
 
 instance Binary KnownExtension
 instance Structured KnownExtension
+instance Inspectable KnownExtension
 
 instance NFData KnownExtension where rnf = genericRnf
 

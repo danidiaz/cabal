@@ -80,6 +80,7 @@ import Distribution.Compiler
 import Distribution.Version
 import Language.Haskell.Extension
 import Distribution.Simple.Utils
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 import qualified Data.Map as Map (lookup)
 import System.Directory (canonicalizePath)
@@ -104,6 +105,7 @@ data Compiler = Compiler {
 
 instance Binary Compiler
 instance Structured Compiler
+instance Inspectable Compiler
 
 showCompilerId :: Compiler -> String
 showCompilerId = prettyShow . compilerId
@@ -176,6 +178,7 @@ data PackageDB = GlobalPackageDB
 
 instance Binary PackageDB
 instance Structured PackageDB
+instance Inspectable PackageDB
 
 -- | We typically get packages from several databases, and stack them
 -- together. This type lets us be explicit about that stacking. For example
@@ -230,6 +233,7 @@ data OptimisationLevel = NoOptimisation
 
 instance Binary OptimisationLevel
 instance Structured OptimisationLevel
+instance Inspectable OptimisationLevel
 
 flagToOptimisationLevel :: Maybe String -> OptimisationLevel
 flagToOptimisationLevel Nothing  = NormalOptimisation
@@ -258,6 +262,7 @@ data DebugInfoLevel = NoDebugInfo
 
 instance Binary DebugInfoLevel
 instance Structured DebugInfoLevel
+instance Inspectable DebugInfoLevel
 
 flagToDebugInfoLevel :: Maybe String -> DebugInfoLevel
 flagToDebugInfoLevel Nothing  = NormalDebugInfo
@@ -423,6 +428,7 @@ data ProfDetailLevel = ProfDetailNone
 
 instance Binary ProfDetailLevel
 instance Structured ProfDetailLevel
+instance Inspectable ProfDetailLevel
 
 flagToProfDetailLevel :: String -> ProfDetailLevel
 flagToProfDetailLevel "" = ProfDetailDefault

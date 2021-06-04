@@ -31,6 +31,7 @@ module Distribution.Simple.Flag (
 import Prelude ()
 import Distribution.Compat.Prelude hiding (get)
 import Distribution.Compat.Stack
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- ------------------------------------------------------------
 -- * Flag type
@@ -57,6 +58,7 @@ data Flag a = Flag a | NoFlag deriving (Eq, Generic, Show, Read, Typeable)
 
 instance Binary a => Binary (Flag a)
 instance Structured a => Structured (Flag a)
+instance Inspectable a => Inspectable (Flag a)
 
 instance Functor Flag where
   fmap f (Flag x) = Flag (f x)

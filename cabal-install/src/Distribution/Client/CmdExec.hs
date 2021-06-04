@@ -9,9 +9,12 @@
 -------------------------------------------------------------------------------
 
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Distribution.Client.CmdExec
-  ( execAction
-  , execCommand
+  (
+    execCommand,
+    ExecAction (..),
+    makeExecAction
   ) where
 
 import Distribution.Client.DistDirLayout
@@ -94,6 +97,10 @@ import Distribution.Client.Compat.Prelude
 import qualified Data.Set as S
 import qualified Data.Map as M
 
+import Distribution.Client.Instrumentation (Instrumentable)
+import Distribution.Client.Utils.Inspectable (Inspectable)
+
+
 execCommand :: CommandUI (NixStyleFlags ())
 execCommand = CommandUI
   { commandName = "v2-exec"
@@ -120,8 +127,18 @@ execCommand = CommandUI
   , commandDefaultFlags = defaultNixStyleFlags ()
   }
 
-execAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-execAction flags@NixStyleFlags {..} extraArgs globalFlags = do
+
+newtype ExecAction = ExecAction { execAction :: NixStyleFlags () -> [String] -> GlobalFlags -> IO () }
+    deriving Generic
+instance Instrumentable ExecAction
+
+makeExecAction :: cc -> ExecAction
+makeExecAction cc = ExecAction $ 
+    \flags targetStrings globalFlags -> 
+    makeExecAction_ cc flags targetStrings globalFlags
+
+makeExecAction_ :: cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
+makeExecAction_ _ flags@NixStyleFlags {..} extraArgs globalFlags = do
 
   baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 

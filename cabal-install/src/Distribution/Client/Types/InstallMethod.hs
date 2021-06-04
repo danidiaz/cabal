@@ -7,6 +7,8 @@ import Prelude ()
 import qualified Distribution.Compat.CharParsing as P
 import qualified Text.PrettyPrint                as PP
 
+import Distribution.Client.Utils.Inspectable (Inspectable)
+
 data InstallMethod
     = InstallMethodCopy
     | InstallMethodSymlink
@@ -14,6 +16,7 @@ data InstallMethod
 
 instance Binary InstallMethod
 instance Structured InstallMethod
+instance Inspectable InstallMethod
 
 -- | Last
 instance Semigroup InstallMethod where

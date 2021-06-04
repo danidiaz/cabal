@@ -116,6 +116,8 @@ import Distribution.Client.Utils              (determineNumJobs
                                               ,relaxEncodingErrors
                                               ,cabalInstallVersion
                                               )
+import Distribution.Client.CompositionContext ( CompositionContext, withCompositionContext )
+import Distribution.Client.Instrumentation    ( has )
 
 import Distribution.Package (packageId)
 import Distribution.PackageDescription
@@ -181,8 +183,12 @@ main = do
   (args0, args1) <- break (== "--") <$> getArgs
   mainWorker =<< (++ args1) <$> expandResponse args0
 
+
 mainWorker :: [String] -> IO ()
-mainWorker args = do
+mainWorker args = withCompositionContext (\cc -> mainWorker_ cc args)
+
+mainWorker_ :: CompositionContext -> [String] -> IO ()
+mainWorker_ cc args = do
   maybeScriptAndArgs <- case args of
     []     -> return Nothing
     (h:tl) -> (\b -> if b then Just (h:|tl) else Nothing) <$> CmdRun.validScript h
@@ -201,7 +207,7 @@ mainWorker args = do
           CommandHelp     help           -> printCommandHelp help
           CommandList     opts           -> printOptionsList opts
           CommandErrors   errs           -> maybe (printErrors errs) go maybeScriptAndArgs where
-            go (script:|scriptArgs) = CmdRun.handleShebang script scriptArgs
+            go (script:|scriptArgs) = CmdRun.handleShebang (has cc) script scriptArgs
           CommandReadyToGo action        -> action globalFlags
 
   where
@@ -245,20 +251,20 @@ mainWorker args = do
       , hiddenCmd  formatCommand formatAction
       , hiddenCmd  actAsSetupCommand actAsSetupAction
       , hiddenCmd  manpageCommand (manpageAction commandSpecs)
-      , regularCmd CmdListBin.listbinCommand     CmdListBin.listbinAction
+      , regularCmd CmdListBin.listbinCommand     (CmdListBin.listbinAction (has cc))
 
       ] ++ concat
       [ newCmd  CmdConfigure.configureCommand CmdConfigure.configureAction
       , newCmd  CmdUpdate.updateCommand       CmdUpdate.updateAction
-      , newCmd  CmdBuild.buildCommand         CmdBuild.buildAction
-      , newCmd  CmdRepl.replCommand           CmdRepl.replAction
+      , newCmd  CmdBuild.buildCommand         (CmdBuild.buildAction (has cc))
+      , newCmd  CmdRepl.replCommand           (CmdRepl.replAction (has cc))
       , newCmd  CmdFreeze.freezeCommand       CmdFreeze.freezeAction
-      , newCmd  CmdHaddock.haddockCommand     CmdHaddock.haddockAction
-      , newCmd  CmdInstall.installCommand     CmdInstall.installAction
-      , newCmd  CmdRun.runCommand             CmdRun.runAction
-      , newCmd  CmdTest.testCommand           CmdTest.testAction
-      , newCmd  CmdBench.benchCommand         CmdBench.benchAction
-      , newCmd  CmdExec.execCommand           CmdExec.execAction
+      , newCmd  CmdHaddock.haddockCommand     (CmdHaddock.haddockAction (has cc))
+      , newCmd  CmdInstall.installCommand     (CmdInstall.installAction (has cc))
+      , newCmd  CmdRun.runCommand             (CmdRun.runAction (has cc))
+      , newCmd  CmdTest.testCommand           (CmdTest.testAction (has cc))
+      , newCmd  CmdBench.benchCommand         (CmdBench.benchAction (has cc))
+      , newCmd  CmdExec.execCommand           (CmdExec.execAction (has cc))
       , newCmd  CmdClean.cleanCommand         CmdClean.cleanAction
       , newCmd  CmdSdist.sdistCommand         CmdSdist.sdistAction
 

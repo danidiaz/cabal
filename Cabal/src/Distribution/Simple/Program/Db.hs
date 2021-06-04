@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts   #-}
 {-# LANGUAGE RankNTypes         #-}
+{-# LANGUAGE DeriveGeneric      #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -69,6 +70,7 @@ import Distribution.Simple.Program.Builtin
 import Distribution.Simple.Program.Find
 import Distribution.Simple.Program.Types
 import Distribution.Simple.Utils
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 import Distribution.Utils.Structured       (Structure (..), Structured (..))
 import Distribution.Verbosity
 import Distribution.Version
@@ -94,7 +96,9 @@ data ProgramDb = ProgramDb {
         progSearchPath    :: ProgramSearchPath,
         configuredProgs   :: ConfiguredProgs
     }
-  deriving (Typeable)
+  deriving (Typeable, Generic)
+
+instance Inspectable ProgramDb
 
 type UnconfiguredProgram = (Program, Maybe FilePath, [ProgArg])
 type UnconfiguredProgs   = Map.Map String UnconfiguredProgram
