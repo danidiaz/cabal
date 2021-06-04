@@ -116,6 +116,8 @@ import Distribution.Client.Utils              (determineNumJobs
                                               ,relaxEncodingErrors
                                               ,cabalInstallVersion
                                               )
+import Distribution.Client.CompositionContext ( CompositionContext, withCompositionContext )
+import Distribution.Client.Instrumentation    ( has )
 
 import Distribution.Package (packageId)
 import Distribution.PackageDescription
@@ -181,8 +183,12 @@ main = do
   (args0, args1) <- break (== "--") <$> getArgs
   mainWorker =<< (++ args1) <$> expandResponse args0
 
+
 mainWorker :: [String] -> IO ()
-mainWorker args = do
+mainWorker args = withCompositionContext (\cc -> mainWorker_ cc args)
+
+mainWorker_ :: CompositionContext -> [String] -> IO ()
+mainWorker_ cc args = do
   maybeScriptAndArgs <- case args of
     []     -> return Nothing
     (h:tl) -> (\b -> if b then Just (h:|tl) else Nothing) <$> CmdRun.validScript h
@@ -250,7 +256,7 @@ mainWorker args = do
       ] ++ concat
       [ newCmd  CmdConfigure.configureCommand CmdConfigure.configureAction
       , newCmd  CmdUpdate.updateCommand       CmdUpdate.updateAction
-      , newCmd  CmdBuild.buildCommand         CmdBuild.buildAction
+      , newCmd  CmdBuild.buildCommand         (CmdBuild.buildAction (has cc))
       , newCmd  CmdRepl.replCommand           CmdRepl.replAction
       , newCmd  CmdFreeze.freezeCommand       CmdFreeze.freezeAction
       , newCmd  CmdHaddock.haddockCommand     CmdHaddock.haddockAction
