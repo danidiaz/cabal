@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE RecordWildCards, NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- | This module deals with building and incrementally rebuilding a collection
 -- of packages. It is what backs the @cabal build@ and @configure@ commands,
@@ -50,7 +51,8 @@ module Distribution.Client.ProjectOrchestration (
 
     -- * Pre-build phase: decide what to do.
     withInstallPlan,
-    runProjectPreBuildPhase,
+    RunProjectPreBuildPhase(..),
+    makeRunProjectPreBuildPhase,
     ProjectBuildContext(..),
 
     -- ** Selecting what targets we mean
@@ -89,7 +91,8 @@ module Distribution.Client.ProjectOrchestration (
     printPlan,
 
     -- * Build phase: now do it.
-    runProjectBuildPhase,
+    RunProjectBuildPhase(..),
+    makeRunProjectBuildPhase,
 
     -- * Post build actions
     runProjectPostBuildPhase,
@@ -168,6 +171,9 @@ import           Control.Exception (assert)
 #ifdef MIN_VERSION_unix
 import           System.Posix.Signals (sigKILL, sigSEGV)
 #endif
+
+import Distribution.Client.Instrumentation (Instrumentable)
+import Distribution.Client.Utils.Inspectable (Inspectable)
 
 
 -- | Tracks what command is being executed, because we need to hide this somewhere
@@ -306,12 +312,29 @@ withInstallPlan
                          localPackages
     action elaboratedPlan elaboratedShared
 
-runProjectPreBuildPhase
-    :: Verbosity
+
+newtype RunProjectPreBuildPhase = RunProjectPreBuildPhase { 
+            runProjectPreBuildPhase :: Verbosity 
+                                    -> ProjectBaseContext
+                                    -> (ElaboratedInstallPlan -> IO (ElaboratedInstallPlan, TargetsMap))
+                                    -> IO ProjectBuildContext
+    }
+    deriving Generic
+instance Instrumentable RunProjectPreBuildPhase
+
+makeRunProjectPreBuildPhase :: cc -> RunProjectPreBuildPhase
+makeRunProjectPreBuildPhase cc = RunProjectPreBuildPhase $ 
+    \verbosity projectBaseContext selectPlanSubset -> 
+    makeRunProjectPreBuildPhase_ cc verbosity projectBaseContext selectPlanSubset
+
+makeRunProjectPreBuildPhase_
+    :: cc
+    -> Verbosity
     -> ProjectBaseContext
     -> (ElaboratedInstallPlan -> IO (ElaboratedInstallPlan, TargetsMap))
     -> IO ProjectBuildContext
-runProjectPreBuildPhase
+makeRunProjectPreBuildPhase_
+    _
     verbosity
     ProjectBaseContext {
       distDirLayout,
@@ -363,15 +386,31 @@ runProjectPreBuildPhase
 -- Execute all or parts of the description of what to do to build or
 -- rebuild the various packages needed.
 --
-runProjectBuildPhase :: Verbosity
-                     -> ProjectBaseContext
-                     -> ProjectBuildContext
-                     -> IO BuildOutcomes
-runProjectBuildPhase _ ProjectBaseContext{buildSettings} _
+
+newtype RunProjectBuildPhase = RunProjectBuildPhase { 
+            runProjectBuildPhase :: Verbosity 
+                                 -> ProjectBaseContext
+                                 -> ProjectBuildContext
+                                 -> IO BuildOutcomes
+    }
+    deriving Generic
+instance Instrumentable RunProjectBuildPhase
+
+makeRunProjectBuildPhase :: cc -> RunProjectBuildPhase
+makeRunProjectBuildPhase cc = RunProjectBuildPhase $ 
+    \verbosity projectBaseContext projectBuildContext -> 
+    makeRunProjectBuildPhase_ cc verbosity projectBaseContext projectBuildContext
+
+makeRunProjectBuildPhase_ :: cc
+                          -> Verbosity
+                          -> ProjectBaseContext
+                          -> ProjectBuildContext
+                          -> IO BuildOutcomes
+makeRunProjectBuildPhase_ _ _ ProjectBaseContext{buildSettings} _
   | buildSettingDryRun buildSettings
   = return Map.empty
 
-runProjectBuildPhase verbosity
+makeRunProjectBuildPhase_ _ verbosity
                      ProjectBaseContext{..} ProjectBuildContext {..} =
     fmap (Map.union (previousBuildOutcomes pkgsBuildStatus)) $
     rebuildTargets verbosity
