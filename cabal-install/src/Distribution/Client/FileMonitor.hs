@@ -108,6 +108,10 @@ instance Structured MonitorFilePath
 instance Structured MonitorKindFile
 instance Structured MonitorKindDir
 
+instance Inspectable MonitorFilePath
+instance Inspectable MonitorKindFile
+instance Inspectable MonitorKindDir
+
 -- | Monitor a single file for changes, based on its modification time.
 -- The monitored file is considered to have changed if it no longer
 -- exists or if its modification time has changed.
@@ -215,6 +219,7 @@ data MonitorStateFileSet
 
 instance Binary MonitorStateFileSet
 instance Structured MonitorStateFileSet
+instance Inspectable MonitorStateFileSet
 
 type Hash = Int
 
@@ -246,6 +251,8 @@ instance Binary MonitorStateFile
 instance Binary MonitorStateFileStatus
 instance Structured MonitorStateFile
 instance Structured MonitorStateFileStatus
+instance Inspectable MonitorStateFile
+instance Inspectable MonitorStateFileStatus
 
 -- | The state necessary to determine whether the files matched by a globbing
 -- match have changed.
@@ -273,6 +280,9 @@ instance Binary MonitorStateGlobRel
 
 instance Structured MonitorStateGlob
 instance Structured MonitorStateGlobRel
+
+instance Inspectable MonitorStateGlob
+instance Inspectable MonitorStateGlobRel
 
 -- | We can build a 'MonitorStateFileSet' from a set of 'MonitorFilePath' by
 -- inspecting the state of the file system, and we can go in the reverse
@@ -379,7 +389,8 @@ data MonitorChanged a b =
      -- | The monitor found that something changed. The reason is given.
      --
    | MonitorChanged (MonitorChangedReason a)
-  deriving Show
+  deriving (Show, Generic)
+instance (Inspectable a, Inspectable b) => Inspectable (MonitorChanged a b)
 
 -- | What kind of change 'checkFileMonitorChanged' detected.
 --
@@ -408,7 +419,8 @@ data MonitorChangedReason a =
      -- that we cannot decode the values. This is completely benign as we can
      -- treat is just as if there were no cache file and re-run.
    | MonitorCorruptCache
-  deriving (Eq, Show, Functor)
+  deriving (Eq, Show, Functor, Generic)
+instance Inspectable a => Inspectable (MonitorChangedReason a)
 
 -- | Test if the input value or files monitored by the 'FileMonitor' have
 -- changed. If not, return the cached value.

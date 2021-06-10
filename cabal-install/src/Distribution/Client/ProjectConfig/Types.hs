@@ -321,6 +321,7 @@ newtype MapLast k v = MapLast { getMapLast :: Map k v }
   deriving (Eq, Show, Functor, Generic, Binary, Typeable)
 
 instance (Structured k, Structured v) => Structured (MapLast k v)
+instance (Inspectable k, Inspectable v) => Inspectable (MapLast k v)
 
 instance Ord k => Monoid (MapLast k v) where
   mempty  = MapLast Map.empty
@@ -337,6 +338,7 @@ newtype MapMappend k v = MapMappend { getMapMappend :: Map k v }
   deriving (Eq, Show, Functor, Generic, Binary, Typeable)
 
 instance (Structured k, Structured v) => Structured (MapMappend k v)
+instance (Inspectable k, Inspectable v) => Inspectable (MapMappend k v)
 
 instance (Semigroup v, Ord k) => Monoid (MapMappend k v) where
   mempty  = MapMappend Map.empty
@@ -461,3 +463,5 @@ data BuildTimeSettings
        buildSettingIgnoreExpiry          :: Bool,
        buildSettingProgPathExtra         :: [FilePath]
      }
+     deriving Generic
+instance Inspectable BuildTimeSettings

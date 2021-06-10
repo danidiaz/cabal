@@ -60,6 +60,7 @@ newtype ModTime = ModTime Word64
                 deriving (Binary, Generic, Bounded, Eq, Ord, Typeable)
 
 instance Structured ModTime
+instance Inspectable ModTime
 
 instance Show ModTime where
   show (ModTime x) = show x

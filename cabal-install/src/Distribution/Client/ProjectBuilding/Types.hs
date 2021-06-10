@@ -86,6 +86,8 @@ data BuildStatus =
      --   So this package can be put into the 'InstallPlan.Installed' state
      --   and it does not need to be built.
    | BuildStatusUpToDate BuildResult
+   deriving Generic
+instance Inspectable BuildStatus
 
 
 -- | Which 'BuildStatus' values indicate we'll have to do some build work of
@@ -130,6 +132,8 @@ data BuildStatusRebuild =
      -- necessary (e.g., executable.)
      --
    | BuildStatusBuild (Maybe (Maybe InstalledPackageInfo)) BuildReason
+   deriving Generic
+instance Inspectable BuildStatusRebuild
 
 data BuildReason =
      -- | The dependencies of this package have been (re)built so the build
@@ -157,6 +161,8 @@ data BuildReason =
      -- other action that does not result in additional persistent artifacts.
      --
    | BuildReasonEphemeralTargets
+   deriving Generic
+instance Inspectable BuildReason
 
 
 ------------------------------------------------------------------------------
@@ -179,7 +185,8 @@ data BuildResult = BuildResult {
        buildResultTests   :: TestsResult,
        buildResultLogFile :: Maybe FilePath
      }
-  deriving Show
+  deriving (Show, Generic)
+instance Inspectable BuildResult
 
 -- | Information arising from the failure to build a single package.
 --
