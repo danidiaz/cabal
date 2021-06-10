@@ -27,6 +27,12 @@ import           Distribution.Client.CmdRun (
                         makeRunAction,
                         HandleShebangAction(..), 
                         makeHandleShebangAction)
+import           Distribution.Client.ProjectOrchestration (
+                    RunProjectPreBuildPhase(..),
+                    makeRunProjectPreBuildPhase,
+                    RunProjectBuildPhase(..),
+                    makeRunProjectBuildPhase,
+                 )
 import qualified Data.Map as M
 import qualified Data.Set as S
 import           System.Environment
@@ -44,6 +50,8 @@ data CompositionContext_ h = CompositionContext {
         _benchAction :: h BenchAction,
         _runAction :: h RunAction,
         _handleShebangAction :: h HandleShebangAction,
+        _runProjectPreBuildPhase = h RunProjectPreBuildPhase
+        _runProjectBuildPhase = h RunProjectBuildPhase
         _instrumentator :: h Instrumentator
 
     } 
@@ -81,6 +89,12 @@ instance Has RunAction CompositionContext where
 instance Has HandleShebangAction CompositionContext where
     has = runIdentity . _handleShebangAction
 
+instance Has RunProjectPreBuildPhase CompositionContext where
+    has = runIdentity . _runProjectPreBuildPhase
+    
+instance Has RunProjectBuildPhase CompositionContext where
+    has = runIdentity . _runProjectBuildPhase
+
 instance Has Instrumentator CompositionContext where
     has = runIdentity . _instrumentator
 
@@ -96,6 +110,8 @@ open = CompositionContext {
         _benchAction = makeBenchAction,
         _runAction = makeRunAction,
         _handleShebangAction = makeHandleShebangAction,
+        _runProjectPreBuildPhase = makeRunProjectPreBuildPhase,
+        _runProjectBuildPhase = makeRunProjectBuildPhase,
         _instrumentator = \_ -> makeInstrumentator
 }
 

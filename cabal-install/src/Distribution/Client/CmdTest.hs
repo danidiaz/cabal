@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | cabal-install CLI command: test
 --
@@ -43,8 +44,7 @@ import Distribution.Simple.Utils
 
 import qualified System.Exit (exitSuccess)
 
-import Distribution.Client.Instrumentation (Instrumentable)
-import Distribution.Client.Utils.Inspectable (Inspectable)
+import Distribution.Client.Instrumentation (Instrumentable, Has(has))
 
 
 testCommand :: CommandUI (NixStyleFlags ())
@@ -100,13 +100,20 @@ newtype TestAction = TestAction { testAction :: NixStyleFlags () -> [String] -> 
     deriving Generic
 instance Instrumentable TestAction
 
-makeTestAction :: cc -> TestAction
+makeTestAction :: ( Has RunProjectPreBuildPhase cc
+                  , Has RunProjectBuildPhase cc 
+                  )
+               => cc 
+               -> TestAction
 makeTestAction cc = TestAction $ 
     \flags targetStrings globalFlags -> 
     makeTestAction_ cc flags targetStrings globalFlags
 
-makeTestAction_ :: cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-makeTestAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
+makeTestAction_ :: ( Has RunProjectPreBuildPhase cc
+                   , Has RunProjectBuildPhase cc 
+                   )
+                => cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
+makeTestAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 
@@ -114,7 +121,7 @@ makeTestAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
                    =<< readTargetSelectors (localPackages baseCtx) (Just TestKind) targetStrings
 
     buildCtx <-
-      runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx)) $
               die' verbosity $
@@ -140,7 +147,7 @@ makeTestAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase verbosity baseCtx buildCtx
+    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
     runProjectPostBuildPhase verbosity baseCtx buildCtx buildOutcomes
   where
     failWhenNoTestSuites = testFailWhenNoTestSuites testFlags
