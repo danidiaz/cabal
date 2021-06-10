@@ -5,6 +5,8 @@ module Distribution.CabalSpecVersion where
 import Prelude ()
 import Distribution.Compat.Prelude
 
+import Distribution.Simple.Utils.Inspectable (Inspectable)
+
 -- | Different Cabal-the-spec versions.
 --
 -- We branch based on this at least in the parser.
@@ -33,6 +35,7 @@ data CabalSpecVersion
 
 instance Binary CabalSpecVersion
 instance Structured CabalSpecVersion
+instance Inspectable CabalSpecVersion
 instance NFData CabalSpecVersion where rnf = genericRnf
 
 -- | Show cabal spec version, but not the way in the .cabal files

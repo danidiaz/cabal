@@ -11,6 +11,7 @@ module Distribution.Types.Condition (
 
 import Prelude ()
 import Distribution.Compat.Prelude
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 -- | A boolean expression parameterized over the variable type used.
 data Condition c = Var c
@@ -19,6 +20,8 @@ data Condition c = Var c
                  | COr (Condition c) (Condition c)
                  | CAnd (Condition c) (Condition c)
     deriving (Show, Eq, Typeable, Data, Generic)
+
+instance Inspectable c => Inspectable (Condition c)
 
 -- | Boolean negation of a 'Condition' value.
 cNot :: Condition a -> Condition a

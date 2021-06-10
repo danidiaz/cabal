@@ -92,6 +92,8 @@ import Distribution.Utils.ShortText
 
 import qualified Distribution.SPDX as SPDX
 
+import Distribution.Simple.Utils.Inspectable (Inspectable)
+
 -- -----------------------------------------------------------------------------
 -- The PackageDescription type
 
@@ -150,6 +152,7 @@ data PackageDescription
 
 instance Binary PackageDescription
 instance Structured PackageDescription
+instance Inspectable PackageDescription
 
 instance NFData PackageDescription where rnf = genericRnf
 
