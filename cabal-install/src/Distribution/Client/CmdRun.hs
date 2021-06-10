@@ -113,8 +113,7 @@ import System.Directory
 import System.FilePath
          ( (</>), isValid, isPathSeparator, takeExtension )
 
-import Distribution.Client.Instrumentation (Has (..), Instrumentable)
-import Distribution.Client.Utils.Inspectable (Inspectable)
+import Distribution.Client.Instrumentation (Instrumentable, Has(has) )
 
 runCommand :: CommandUI (NixStyleFlags ())
 runCommand = CommandUI
@@ -167,13 +166,19 @@ newtype RunAction = RunAction { runAction :: NixStyleFlags () -> [String] -> Glo
     deriving Generic
 instance Instrumentable RunAction
 
-makeRunAction :: cc -> RunAction
+makeRunAction :: ( Has RunProjectPreBuildPhase cc
+                 , Has RunProjectBuildPhase cc 
+                 )
+              => cc -> RunAction
 makeRunAction cc = RunAction $ 
     \flags targetStrings globalFlags -> 
     makeRunAction_ cc flags targetStrings globalFlags
 
-makeRunAction_ :: cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-makeRunAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
+makeRunAction_ :: ( Has RunProjectPreBuildPhase cc
+                  , Has RunProjectBuildPhase cc 
+                  )
+               => cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
+makeRunAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
     globalTmp <- getTemporaryDirectory
     tmpDir <- createTempDirectory globalTmp "cabal-repl."
 
@@ -208,7 +213,7 @@ makeRunAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
           Right sels -> return (baseCtx, sels)
 
     buildCtx <-
-      runProjectPreBuildPhase verbosity baseCtx' $ \elaboratedPlan -> do
+      runProjectPreBuildPhase (has cc) verbosity baseCtx' $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx')) $
               die' verbosity $
@@ -254,7 +259,7 @@ makeRunAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx' buildCtx
 
-    buildOutcomes <- runProjectBuildPhase verbosity baseCtx' buildCtx
+    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx' buildCtx
     runProjectPostBuildPhase verbosity baseCtx' buildCtx buildOutcomes
 
 
