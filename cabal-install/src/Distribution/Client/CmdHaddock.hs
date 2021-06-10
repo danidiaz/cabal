@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | cabal-install CLI command: haddock
 --
@@ -32,8 +33,7 @@ import Distribution.Verbosity
          ( normal )
 import Distribution.Simple.Utils
          ( wrapText, die' )
-import Distribution.Client.Instrumentation (Instrumentable)
-import Distribution.Client.Utils.Inspectable (Inspectable)
+import Distribution.Client.Instrumentation (Instrumentable, Has (has))
 
 haddockCommand :: CommandUI (NixStyleFlags ())
 haddockCommand = CommandUI {
@@ -76,20 +76,27 @@ newtype HaddockAction = HaddockAction { haddockAction :: NixStyleFlags () -> [St
     deriving Generic
 instance Instrumentable HaddockAction
 
-makeHaddockAction :: cc -> HaddockAction
+makeHaddockAction :: ( Has RunProjectPreBuildPhase cc
+                     , Has RunProjectBuildPhase cc 
+                     )
+                  => cc 
+                  -> HaddockAction
 makeHaddockAction cc = HaddockAction $ 
     \flags targetStrings globalFlags -> 
     makeHaddockAction_ cc flags targetStrings globalFlags
 
-makeHaddockAction_ :: cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-makeHaddockAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
+makeHaddockAction_ :: ( Has RunProjectPreBuildPhase cc
+                      , Has RunProjectBuildPhase cc 
+                      )
+                   => cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
+makeHaddockAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
     baseCtx <- establishProjectBaseContext verbosity cliConfig HaddockCommand
 
     targetSelectors <- either (reportTargetSelectorProblems verbosity) return
                    =<< readTargetSelectors (localPackages baseCtx) Nothing targetStrings
 
     buildCtx <-
-      runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx)) $
               die' verbosity
@@ -113,7 +120,7 @@ makeHaddockAction_ _ flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase verbosity baseCtx buildCtx
+    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
     runProjectPostBuildPhase verbosity baseCtx buildCtx buildOutcomes
   where
     verbosity = fromFlagOrDefault normal (configVerbosity configFlags)
