@@ -4,6 +4,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | cabal-install CLI command: repl
 --
@@ -104,8 +105,7 @@ import Language.Haskell.Extension
 import Distribution.CabalSpecVersion
          ( CabalSpecVersion (..) )
 
-import Distribution.Client.Instrumentation (Instrumentable)
-import Distribution.Client.Utils.Inspectable (Inspectable)
+import Distribution.Client.Instrumentation (Instrumentable, Has(has))
 
 import Data.List
          ( (\\) )
@@ -206,13 +206,17 @@ newtype ReplAction = ReplAction { replAction :: NixStyleFlags (ReplFlags, EnvFla
     deriving Generic
 instance Instrumentable ReplAction
 
-makeReplAction :: cc -> ReplAction
+makeReplAction :: ( Has RunProjectBuildPhase cc 
+                  )
+               => cc -> ReplAction
 makeReplAction cc = ReplAction $ 
     \flags targetStrings globalFlags -> 
     makeReplAction_ cc flags targetStrings globalFlags
 
-makeReplAction_ :: cc -> NixStyleFlags (ReplFlags, EnvFlags) -> [String] -> GlobalFlags -> IO ()
-makeReplAction_ _ flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..} targetStrings globalFlags = do
+makeReplAction_ :: ( Has RunProjectBuildPhase cc 
+                   )
+                => cc -> NixStyleFlags (ReplFlags, EnvFlags) -> [String] -> GlobalFlags -> IO ()
+makeReplAction_ cc flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..} targetStrings globalFlags = do
     let
       with           = withProject    cliConfig             verbosity targetStrings
       without config = withoutProject (config <> cliConfig) verbosity targetStrings
@@ -305,7 +309,7 @@ makeReplAction_ _ flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..} 
           }
     printPlan verbosity baseCtx' buildCtx'
 
-    buildOutcomes <- runProjectBuildPhase verbosity baseCtx' buildCtx'
+    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx' buildCtx'
     runProjectPostBuildPhase verbosity baseCtx' buildCtx' buildOutcomes
     finalizer
   where
