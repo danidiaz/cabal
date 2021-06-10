@@ -192,6 +192,8 @@ data ProjectBaseContext = ProjectBaseContext {
        buildSettings  :: BuildTimeSettings,
        currentCommand :: CurrentCommand
      }
+     deriving Generic
+instance Inspectable ProjectBaseContext
 
 establishProjectBaseContext
     :: Verbosity
@@ -282,8 +284,8 @@ data ProjectBuildContext = ProjectBuildContext {
       -- | The targets selected by @selectPlanSubset@. This is useful eg. in
       -- CmdRun, where we need a valid target to execute.
       targetsMap             :: TargetsMap
-    }
-
+    } deriving (Generic)
+instance Inspectable ProjectBuildContext
 
 -- | Pre-build phase: decide what to do.
 --
@@ -693,7 +695,9 @@ data AvailableTargetIndexes = AvailableTargetIndexes {
 
        availableTargetsByPackageNameAndUnqualComponentName
          :: AvailableTargetsMap (PackageName, UnqualComponentName)
-     }
+     } deriving (Generic)
+instance Inspectable AvailableTargetIndexes
+
 type AvailableTargetsMap k = Map k [AvailableTarget (UnitId, ComponentName)]
 
 -- We define a bunch of indexes to help 'resolveTargets' with resolving
@@ -1232,6 +1236,8 @@ dieOnBuildFailures verbosity currentCommand plan buildOutcomes
 data BuildFailurePresentation =
        ShowBuildSummaryOnly   BuildFailureReason
      | ShowBuildSummaryAndLog BuildFailureReason FilePath
+    deriving Generic
+instance Inspectable BuildFailurePresentation
 
 -------------------------------------------------------------------------------
 -- Dummy projects

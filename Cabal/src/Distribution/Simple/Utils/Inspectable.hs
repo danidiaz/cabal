@@ -85,6 +85,10 @@ instance Inspectable a => Inspectable (Maybe a) where
   toInspectionJSON Nothing  = Null
   toInspectionJSON (Just a) = toInspectionJSON a
 
+instance (Inspectable a, Inspectable b) => Inspectable (Either a b) where 
+  toInspectionJSON (Left a)  = object $ [ "Left" .= a ]
+  toInspectionJSON (Right b) = object $ [ "Right" .= b ]
+
 instance (Inspectable a,
           Inspectable b) => Inspectable (a,b) where 
   toInspectionJSON (a,b) = Array [toInspectionJSON a, toInspectionJSON b]

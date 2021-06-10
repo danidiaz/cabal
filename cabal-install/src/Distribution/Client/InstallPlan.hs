@@ -107,6 +107,8 @@ import Control.Exception
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
+import Distribution.Client.Utils.Inspectable (Inspectable)
+
 -- When cabal tries to install a number of packages, including all their
 -- dependencies it has a non-trivial problem to solve.
 --
@@ -235,7 +237,8 @@ data GenericInstallPlan ipkg srcpkg = GenericInstallPlan {
     planGraph      :: !(Graph (GenericPlanPackage ipkg srcpkg)),
     planIndepGoals :: !IndependentGoals
   }
-  deriving (Typeable)
+  deriving (Generic, Typeable)
+instance (Inspectable ipkg, Inspectable srcpkg) => GenericInstallPlan ipkg srcpkg
 
 -- | 'GenericInstallPlan' specialised to most commonly used types.
 type InstallPlan = GenericInstallPlan

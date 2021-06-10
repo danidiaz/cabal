@@ -32,6 +32,7 @@ import Distribution.Package               (UnitId, PackageId)
 import Distribution.InstalledPackageInfo  (InstalledPackageInfo)
 import Distribution.Simple.LocalBuildInfo (ComponentName)
 
+import Distribution.Simple.Utils.Inspectable (Inspectable)
 
 ------------------------------------------------------------------------------
 -- Pre-build status: result of the dry run
@@ -185,8 +186,9 @@ data BuildFailure = BuildFailure {
        buildFailureLogFile :: Maybe FilePath,
        buildFailureReason  :: BuildFailureReason
      }
-  deriving (Show, Typeable)
+  deriving (Show, Generic, Typeable)
 
+instance Inspectable BuildFailure
 instance Exception BuildFailure
 
 -- | Detail on the reason that a package failed to build.
@@ -201,4 +203,5 @@ data BuildFailureReason = DependentFailed PackageId
                         | TestsFailed     SomeException
                         | BenchFailed     SomeException
                         | InstallFailed   SomeException
-  deriving Show
+  deriving (Show, Generic)
+
