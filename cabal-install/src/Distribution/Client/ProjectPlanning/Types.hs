@@ -154,6 +154,7 @@ data ElaboratedSharedConfig
 
 instance Binary ElaboratedSharedConfig
 instance Structured ElaboratedSharedConfig
+instance Inspectable ElaboratedSharedConfig
 
 data ElaboratedConfiguredPackage
    = ElaboratedConfiguredPackage {
@@ -467,6 +468,7 @@ instance IsNode ElaboratedConfiguredPackage where
 
 instance Binary ElaboratedConfiguredPackage
 instance Structured ElaboratedConfiguredPackage
+instance Inspectable ElaboratedConfiguredPackage
 
 data ElaboratedPackageOrComponent
     = ElabPackage   ElaboratedPackage
@@ -475,6 +477,7 @@ data ElaboratedPackageOrComponent
 
 instance Binary ElaboratedPackageOrComponent
 instance Structured ElaboratedPackageOrComponent
+instance Inspectable ElaboratedPackageOrComponent
 
 elabComponentName :: ElaboratedConfiguredPackage -> Maybe ComponentName
 elabComponentName elab =
@@ -667,6 +670,7 @@ data ElaboratedComponent
 
 instance Binary ElaboratedComponent
 instance Structured ElaboratedComponent
+instance Inspectable ElaboratedComponent
 
 -- | See 'elabOrderDependencies'.
 compOrderDependencies :: ElaboratedComponent -> [UnitId]
@@ -716,6 +720,7 @@ data ElaboratedPackage
 
 instance Binary ElaboratedPackage
 instance Structured ElaboratedPackage
+instance Inspectable ElaboratedPackage
 
 -- | See 'elabOrderDependencies'.  This gives the unflattened version,
 -- which can be useful in some circumstances.
@@ -748,6 +753,7 @@ data BuildStyle =
 
 instance Binary BuildStyle
 instance Structured BuildStyle
+instance Inspectable BuildStyle
 instance Semigroup BuildStyle where
     BuildInplaceOnly <> _ = BuildInplaceOnly
     _ <> BuildInplaceOnly = BuildInplaceOnly
@@ -773,6 +779,7 @@ data ComponentTarget = ComponentTarget ComponentName SubComponentTarget
 
 instance Binary ComponentTarget
 instance Structured ComponentTarget
+instance Inspectable ComponentTarget
 
 -- | Unambiguously render a 'ComponentTarget', e.g., to pass
 -- to a Cabal Setup script.
@@ -849,3 +856,4 @@ data SetupScriptStyle = SetupCustomExplicitDeps
 
 instance Binary SetupScriptStyle
 instance Structured SetupScriptStyle
+instance Inspectable SetupScriptStyle

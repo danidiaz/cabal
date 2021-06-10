@@ -173,13 +173,13 @@ import           System.Posix.Signals (sigKILL, sigSEGV)
 #endif
 
 import Distribution.Client.Instrumentation (Instrumentable)
-import Distribution.Client.Utils.Inspectable (Inspectable)
 
 
 -- | Tracks what command is being executed, because we need to hide this somewhere
 -- for cases that need special handling (usually for error reporting).
 data CurrentCommand = InstallCommand | HaddockCommand | OtherCommand
-                    deriving (Show, Eq)
+                    deriving (Show, Eq, Generic)
+instance Inspectable CurrentCommand
 
 -- | This holds the context of a project prior to solving: the content of the
 -- @cabal.project@ and all the local package @.cabal@ files.

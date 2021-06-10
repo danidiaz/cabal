@@ -34,6 +34,7 @@ data ModuleShape = ModuleShape {
 
 instance Binary ModuleShape
 instance Structured ModuleShape
+instance Inspectable ModuleShape
 
 instance ModSubst ModuleShape where
     modSubst subst (ModuleShape provs reqs)
