@@ -41,6 +41,8 @@ deriving instance (Ord (f FilePath)) => Ord (SourceRepositoryPackage f)
 deriving instance (Show (f FilePath)) => Show (SourceRepositoryPackage f)
 deriving instance (Binary (f FilePath)) => Binary (SourceRepositoryPackage f)
 deriving instance (Typeable f, Structured (f FilePath)) => Structured (SourceRepositoryPackage f)
+instance (Inspectable (f FilePath)) => Inspectable (SourceRepositoryPackage f)
+
 
 -- | Read from @cabal.project@
 type SourceRepoList  = SourceRepositoryPackage []

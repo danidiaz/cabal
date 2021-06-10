@@ -155,7 +155,6 @@ data ProjectConfigBuildOnly
      }
   deriving (Eq, Show, Generic)
 
-
 -- | Project configuration that is shared between all packages in the project.
 -- In particular this includes configuration that affects the solver.
 --
@@ -217,7 +216,6 @@ data ProjectConfigShared
      }
   deriving (Eq, Show, Generic)
 
-
 -- | Specifies the provenance of project configuration, whether defaults were
 -- used or if the configuration was read from an explicit file path.
 data ProjectConfigProvenance
@@ -231,7 +229,6 @@ data ProjectConfigProvenance
      -- | The configuration was explicitly read from the specified 'FilePath'.
    | Explicit FilePath
   deriving (Eq, Ord, Show, Generic)
-
 
 -- | Project configuration that is specific to each package, that is where we
 -- can in principle have different values for different packages in the same
@@ -311,6 +308,12 @@ instance Structured ProjectConfigBuildOnly
 instance Structured ProjectConfigShared
 instance Structured ProjectConfigProvenance
 instance Structured PackageConfig
+
+instance Inspectable ProjectConfig
+instance Inspectable ProjectConfigBuildOnly
+instance Inspectable ProjectConfigShared
+instance Inspectable ProjectConfigProvenance
+instance Inspectable PackageConfig
 
 -- | Newtype wrapper for 'Map' that provides a 'Monoid' instance that takes
 -- the last value rather than the first value for overlapping keys.

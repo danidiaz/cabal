@@ -52,6 +52,7 @@ instance IsString AbiHash where
 
 instance Binary AbiHash
 instance Structured AbiHash
+instance Inspectable AbiHash
 instance NFData AbiHash where rnf = genericRnf
 
 instance Pretty AbiHash where

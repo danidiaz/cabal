@@ -175,6 +175,7 @@ data Repo
 
 instance Binary Repo
 instance Structured Repo
+instance Inspectable Repo
 
 -- | Check if this is a remote repo
 isRepoRemote :: Repo -> Bool

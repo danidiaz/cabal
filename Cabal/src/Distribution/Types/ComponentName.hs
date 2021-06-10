@@ -29,6 +29,7 @@ data ComponentName = CLibName   LibraryName
 
 instance Binary ComponentName
 instance Structured ComponentName
+instance Inspectable ComponentName
 
 -- Build-target-ish syntax
 instance Pretty ComponentName where

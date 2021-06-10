@@ -57,3 +57,8 @@ instance Structured BuildFailure
 instance Structured BuildResult
 instance Structured DocsResult
 instance Structured TestsResult
+
+instance Inspectable BuildFailure
+instance Inspectable BuildResult
+instance Inspectable DocsResult
+instance Inspectable TestsResult

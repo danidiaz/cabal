@@ -45,6 +45,7 @@ data PackageLocation local =
 
 instance Binary local => Binary (PackageLocation local)
 instance Structured local => Structured (PackageLocation local)
+instance Inspectable local => Inspectable (PackageLocation local)
 
 -- | Convenience alias for 'SourcePackage UnresolvedPkgLoc'.
 type UnresolvedSourcePackage = SourcePackage UnresolvedPkgLoc

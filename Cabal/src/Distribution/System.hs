@@ -223,6 +223,7 @@ data Platform = Platform Arch OS
 
 instance Binary Platform
 instance Structured Platform
+instance Inspectable Platform
 instance NFData Platform where rnf = genericRnf
 
 instance Pretty Platform where

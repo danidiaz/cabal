@@ -41,4 +41,5 @@ instance  Parsec AbiDependency where
 
 instance Binary AbiDependency
 instance Structured AbiDependency
+instance Inspectable AbiDependency
 instance NFData AbiDependency where rnf = genericRnf
