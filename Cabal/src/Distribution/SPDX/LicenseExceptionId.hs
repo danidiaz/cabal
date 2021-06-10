@@ -86,6 +86,8 @@ instance Binary LicenseExceptionId where
 instance Structured LicenseExceptionId where
     structure p = set typeVersion 306 $ nominalStructure p
 
+instance Inspectable LicenseExceptionId
+
 instance Pretty LicenseExceptionId where
     pretty = Disp.text . licenseExceptionId
 

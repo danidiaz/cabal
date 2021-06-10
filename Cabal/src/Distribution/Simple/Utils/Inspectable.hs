@@ -26,11 +26,15 @@ module Distribution.Simple.Utils.Inspectable
     , encodeToBuilder
     ) where
 
--- Importing Compat.Prelude causes a cycle involving Distribution.Compat.Semigroup
--- import Prelude 
-import Distribution.Compat.Prelude
+import Prelude 
+import Data.String (IsString(..))
+import Data.Proxy
 import Distribution.Compat.Semigroup
-import qualified Distribution.Compat.NonEmptySet (NonEmptySet)
+import Distribution.Compat.NonEmptySet (NonEmptySet(..))
+import Data.Int                      (Int16, Int32, Int64, Int8)
+import Data.Word                     (Word, Word16, Word32, Word64, Word8)
+import Data.Char (ord)
+import Data.List (intersperse)
 import qualified Distribution.Compat.NonEmptySet as NonEmptySet
 import GHC.Generics
 import Data.Char (intToDigit)

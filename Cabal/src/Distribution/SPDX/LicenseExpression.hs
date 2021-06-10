@@ -61,6 +61,8 @@ instance Binary LicenseExpression
 instance Binary SimpleLicenseExpression
 instance Structured SimpleLicenseExpression
 instance Structured LicenseExpression
+instance Inspectable SimpleLicenseExpression
+instance Inspectable LicenseExpression
 
 instance Pretty LicenseExpression where
     pretty = go 0

@@ -92,10 +92,10 @@ instance Pretty (SymbolicPath from to) where
 -- | Class telling that index is for directories.
 class IsDir dir
 
-data PackageDir deriving (Typeable)
-data SourceDir  deriving (Typeable)
+data PackageDir deriving (Generic, Typeable)
+data SourceDir  deriving (Generic, Typeable)
 
-data LicenseFile deriving (Typeable)
+data LicenseFile deriving (Generic, Typeable)
 
 -- These instances needs to be derived standalone at least on GHC-7.6
 deriving instance Data PackageDir
@@ -104,3 +104,9 @@ deriving instance Data LicenseFile
 
 instance IsDir PackageDir
 instance IsDir SourceDir
+
+instance Inspectable PackageDir
+instance Inspectable SourceDir
+instance Inspectable LicenseFile
+
+

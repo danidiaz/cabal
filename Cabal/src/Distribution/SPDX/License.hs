@@ -45,6 +45,7 @@ data License
 
 instance Binary License
 instance Structured License
+instance Inspectable License
 
 instance NFData License where
     rnf NONE        = ()
