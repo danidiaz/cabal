@@ -50,10 +50,9 @@ data CompositionContext_ h = CompositionContext {
         _benchAction :: h BenchAction,
         _runAction :: h RunAction,
         _handleShebangAction :: h HandleShebangAction,
-        _runProjectPreBuildPhase = h RunProjectPreBuildPhase
-        _runProjectBuildPhase = h RunProjectBuildPhase
+        _runProjectPreBuildPhase :: h RunProjectPreBuildPhase,
+        _runProjectBuildPhase :: h RunProjectBuildPhase,
         _instrumentator :: h Instrumentator
-
     } 
     deriving Generic
 

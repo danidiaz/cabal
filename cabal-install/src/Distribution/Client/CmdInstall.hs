@@ -3,6 +3,7 @@
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | cabal-install CLI command: build
 --
@@ -143,8 +144,7 @@ import System.Directory
 import System.FilePath
          ( (</>), (<.>), takeDirectory, takeBaseName )
 
-import Distribution.Client.Instrumentation (Instrumentable)
-import Distribution.Client.Utils.Inspectable (Inspectable)
+import Distribution.Client.Instrumentation (Instrumentable, Has(has))
 
 installCommand :: CommandUI (NixStyleFlags ClientInstallFlags)
 installCommand = CommandUI
@@ -199,13 +199,20 @@ newtype InstallAction = InstallAction { installAction :: NixStyleFlags ClientIns
     deriving Generic
 instance Instrumentable InstallAction
 
-makeInstallAction :: cc -> InstallAction
+makeInstallAction :: ( Has RunProjectPreBuildPhase cc 
+                     , Has RunProjectBuildPhase cc 
+                     )
+                  => cc 
+                  -> InstallAction
 makeInstallAction cc = InstallAction $ 
     \flags targetStrings globalFlags -> 
     makeInstallAction_ cc flags targetStrings globalFlags
 
-makeInstallAction_ :: cc -> NixStyleFlags ClientInstallFlags -> [String] -> GlobalFlags -> IO ()
-makeInstallAction_ _ flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targetStrings globalFlags = do
+makeInstallAction_ :: ( Has RunProjectPreBuildPhase cc 
+                      , Has RunProjectBuildPhase cc 
+                      )
+                   => cc -> NixStyleFlags ClientInstallFlags -> [String] -> GlobalFlags -> IO ()
+makeInstallAction_ cc flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targetStrings globalFlags = do
   -- Ensure there were no invalid configuration options specified.
   verifyPreconditionsOrDie verbosity configFlags'
 
@@ -385,11 +392,11 @@ makeInstallAction_ _ flags@NixStyleFlags { extraFlags = clientInstallFlags', .. 
                  (envSpecs ++ specs ++ uriSpecs)
                  InstallCommand
 
-    buildCtx <- constructProjectBuildContext verbosity baseCtx targetSelectors
+    buildCtx <- constructProjectBuildContext cc verbosity baseCtx targetSelectors
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase verbosity baseCtx buildCtx
+    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
     runProjectPostBuildPhase verbosity baseCtx buildCtx buildOutcomes
 
     -- Now that we built everything we can do the installation part.
@@ -556,13 +563,16 @@ partitionToKnownTargetsAndHackagePackages verbosity pkgDb elaboratedPlan targetS
 
 
 constructProjectBuildContext
-  :: Verbosity
+  :: (  Has RunProjectPreBuildPhase cc 
+     )
+  => cc
+  -> Verbosity
   -> ProjectBaseContext
      -- ^ The synthetic base context to use to produce the full build context.
   -> [TargetSelector]
   -> IO ProjectBuildContext
-constructProjectBuildContext verbosity baseCtx targetSelectors = do
-  runProjectPreBuildPhase verbosity baseCtx $ \elaboratedPlan -> do
+constructProjectBuildContext cc verbosity baseCtx targetSelectors = do
+  runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
     -- Interpret the targets on the command line as build targets
     targets <- either (reportBuildTargetProblems verbosity) return $
       resolveTargets
