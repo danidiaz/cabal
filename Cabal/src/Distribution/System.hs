@@ -102,6 +102,7 @@ data OS = Linux | Windows | OSX        -- tier 1 desktop OSs
 
 instance Binary OS
 instance Structured OS
+instance Inspectable OS
 instance NFData OS where rnf = genericRnf
 
 knownOSs :: [OS]
@@ -173,6 +174,7 @@ data Arch = I386  | X86_64  | PPC  | PPC64 | Sparc
 
 instance Binary Arch
 instance Structured Arch
+instance Inspectable Arch
 instance NFData Arch where rnf = genericRnf
 
 knownArches :: [Arch]

@@ -42,6 +42,8 @@ import Data.ByteString.Builder (Builder)
 import qualified Data.ByteString.Builder as BB
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import qualified Data.ByteString.Char8                 as BS8
+import qualified Data.ByteString.Lazy                  as BSL
 
 -- Like ToJSON, but focused on allowing the inspection of values while
 -- instrumenting functions. This warrants different instances.  
@@ -154,6 +156,14 @@ instance Inspectable Word64  where
 -- | Possibly lossy due to conversion to 'Double'
 instance Inspectable Integer where
   toInspectionJSON = Number . realToFrac 
+
+-- TODO dubious? 
+instance Inspectable BS8.ByteString where
+  toInspectionJSON = String . show
+
+-- TODO dubious? 
+instance Inspectable BSL.ByteString where
+  toInspectionJSON = String . show
 
 --
 -- Generic instance for records.

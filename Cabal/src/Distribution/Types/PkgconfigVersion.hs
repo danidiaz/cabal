@@ -35,6 +35,7 @@ instance Ord PkgconfigVersion where
 
 instance Binary PkgconfigVersion
 instance Structured PkgconfigVersion
+instance Inspectable PkgconfigVersion
 instance NFData PkgconfigVersion where rnf = genericRnf
 
 instance Pretty PkgconfigVersion where

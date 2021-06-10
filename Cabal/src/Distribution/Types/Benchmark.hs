@@ -32,6 +32,7 @@ data Benchmark = Benchmark {
 
 instance Binary Benchmark
 instance Structured Benchmark
+instance Inspectable Benchmark
 instance NFData Benchmark where rnf = genericRnf
 
 instance L.HasBuildInfo Benchmark where

@@ -132,6 +132,7 @@ data PerCompilerFlavor v = PerCompilerFlavor v v
 
 instance Binary a => Binary (PerCompilerFlavor a)
 instance Structured a => Structured (PerCompilerFlavor a)
+instance Inspectable a => Inspectable (PerCompilerFlavor a)
 instance NFData a => NFData (PerCompilerFlavor a)
 
 perCompilerFlavorToList :: PerCompilerFlavor v -> [(CompilerFlavor, v)]

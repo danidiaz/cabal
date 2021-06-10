@@ -28,6 +28,7 @@ data LegacyExeDependency = LegacyExeDependency
 
 instance Binary LegacyExeDependency
 instance Structured LegacyExeDependency
+instance Inspectable LegacyExeDependency
 instance NFData LegacyExeDependency where rnf = genericRnf
 
 instance Pretty LegacyExeDependency where

@@ -29,6 +29,7 @@ data BuildType
 
 instance Binary BuildType
 instance Structured BuildType
+instance Inspectable BuildType
 instance NFData BuildType where rnf = genericRnf
 
 knownBuildTypes :: [BuildType]

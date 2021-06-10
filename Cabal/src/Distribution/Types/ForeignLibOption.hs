@@ -36,4 +36,5 @@ instance Parsec ForeignLibOption where
 
 instance Binary ForeignLibOption
 instance Structured ForeignLibOption
+instance Inspectable ForeignLibOption
 instance NFData ForeignLibOption where rnf = genericRnf

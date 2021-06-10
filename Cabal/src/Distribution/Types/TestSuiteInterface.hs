@@ -40,6 +40,7 @@ data TestSuiteInterface =
 
 instance Binary TestSuiteInterface
 instance Structured TestSuiteInterface
+instance Inspectable TestSuiteInterface
 
 instance NFData TestSuiteInterface where rnf = genericRnf
 
