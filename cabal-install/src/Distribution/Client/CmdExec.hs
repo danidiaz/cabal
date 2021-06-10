@@ -10,6 +10,7 @@
 
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Distribution.Client.CmdExec
   (
     execCommand,
@@ -32,7 +33,7 @@ import Distribution.Client.Setup
   )
 import Distribution.Client.ProjectOrchestration
   ( ProjectBuildContext(..)
-  , runProjectPreBuildPhase
+  , RunProjectPreBuildPhase(..)
   , CurrentCommand(..)
   , establishProjectBaseContext
   , distDirLayout
@@ -97,7 +98,7 @@ import Distribution.Client.Compat.Prelude
 import qualified Data.Set as S
 import qualified Data.Map as M
 
-import Distribution.Client.Instrumentation (Instrumentable)
+import Distribution.Client.Instrumentation (Instrumentable, Has (has))
 import Distribution.Client.Utils.Inspectable (Inspectable)
 
 
@@ -132,13 +133,18 @@ newtype ExecAction = ExecAction { execAction :: NixStyleFlags () -> [String] -> 
     deriving Generic
 instance Instrumentable ExecAction
 
-makeExecAction :: cc -> ExecAction
+makeExecAction :: ( Has RunProjectPreBuildPhase cc
+                  )
+               => cc 
+               -> ExecAction
 makeExecAction cc = ExecAction $ 
     \flags targetStrings globalFlags -> 
     makeExecAction_ cc flags targetStrings globalFlags
 
-makeExecAction_ :: cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
-makeExecAction_ _ flags@NixStyleFlags {..} extraArgs globalFlags = do
+makeExecAction_ :: ( Has RunProjectPreBuildPhase cc
+                   )
+                => cc -> NixStyleFlags () -> [String] -> GlobalFlags -> IO ()
+makeExecAction_ cc flags@NixStyleFlags {..} extraArgs globalFlags = do
 
   baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 
@@ -146,6 +152,7 @@ makeExecAction_ _ flags@NixStyleFlags {..} extraArgs globalFlags = do
   -- dependency tree that we've already built. So first we set up an install
   -- plan, but we walk the dependency tree without first executing the plan.
   buildCtx <- runProjectPreBuildPhase
+    (has cc)  
     verbosity
     baseCtx
     (\plan -> return (plan, M.empty))
