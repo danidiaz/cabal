@@ -99,6 +99,8 @@ import qualified Data.Set                    as Set
 import qualified Data.Tree                   as Tree
 import qualified Distribution.Compat.Prelude as Prelude
 
+import Distribution.Simple.Utils.Inspectable (Inspectable(..), InspectableString, IsTheElementChar, object, (.=))
+
 -- | A graph of nodes @a@.  The nodes are expected to have instance
 -- of class 'IsNode'.
 data Graph a
@@ -132,6 +134,9 @@ instance (IsNode a, Binary a, Show (Key a)) => Binary (Graph a) where
 
 instance Structured a => Structured (Graph a) where
     structure p = Nominal (typeRep p) 0 "Graph" [structure (Proxy :: Proxy a)]
+
+instance (InspectableString (IsTheElementChar a) a) => Inspectable (Graph a) where
+    toInspectionJSON g = object [ "graph" .= toList g ]
 
 instance (Eq (Key a), Eq a) => Eq (Graph a) where
     g1 == g2 = graphMap g1 == graphMap g2

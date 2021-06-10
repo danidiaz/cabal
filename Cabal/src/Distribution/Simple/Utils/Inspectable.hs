@@ -36,6 +36,7 @@ import Data.Word                     (Word, Word16, Word32, Word64, Word8)
 import Data.Char (ord)
 import Data.List (intersperse)
 import qualified Distribution.Compat.NonEmptySet as NonEmptySet
+import Control.Exception (SomeException)
 import GHC.Generics
 import Data.Char (intToDigit)
 import Data.ByteString.Builder (Builder)
@@ -164,6 +165,9 @@ instance Inspectable BS8.ByteString where
 -- TODO dubious? 
 instance Inspectable BSL.ByteString where
   toInspectionJSON = String . show
+
+instance Inspectable SomeException where
+  toInspectionJSON e = object [ "exception" .= show e ]
 
 --
 -- Generic instance for records.

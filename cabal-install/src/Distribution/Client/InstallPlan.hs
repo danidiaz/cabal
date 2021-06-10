@@ -204,6 +204,7 @@ instance (IsNode ipkg, IsNode srcpkg, Key ipkg ~ UnitId, Key srcpkg ~ UnitId)
 
 instance (Binary ipkg, Binary srcpkg) => Binary (GenericPlanPackage ipkg srcpkg)
 instance (Structured ipkg, Structured srcpkg) => Structured (GenericPlanPackage ipkg srcpkg)
+instance (Inspectable ipkg, Inspectable srcpkg) => Inspectable (GenericPlanPackage ipkg srcpkg)
 
 type PlanPackage = GenericPlanPackage
                    InstalledPackageInfo (ConfiguredPackage UnresolvedPkgLoc)
@@ -238,7 +239,7 @@ data GenericInstallPlan ipkg srcpkg = GenericInstallPlan {
     planIndepGoals :: !IndependentGoals
   }
   deriving (Generic, Typeable)
-instance (Inspectable ipkg, Inspectable srcpkg) => GenericInstallPlan ipkg srcpkg
+instance (Inspectable ipkg, Inspectable srcpkg) => Inspectable (GenericInstallPlan ipkg srcpkg)
 
 -- | 'GenericInstallPlan' specialised to most commonly used types.
 type InstallPlan = GenericInstallPlan

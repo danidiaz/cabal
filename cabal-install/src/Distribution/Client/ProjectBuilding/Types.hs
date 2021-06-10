@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- | Types for the "Distribution.Client.ProjectBuilding"
 --
@@ -204,4 +205,6 @@ data BuildFailureReason = DependentFailed PackageId
                         | BenchFailed     SomeException
                         | InstallFailed   SomeException
   deriving (Show, Generic)
+
+instance Inspectable BuildFailureReason
 
