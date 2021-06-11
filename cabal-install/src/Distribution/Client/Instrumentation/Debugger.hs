@@ -1,7 +1,42 @@
+{-# LANGUAGE ViewPatterns #-}
 module Distribution.Client.Instrumentation.Debugger (debuggerAllocator) where
+
+import Prelude (read)
+import Distribution.Client.Compat.Prelude
 
 import Distribution.Client.Instrumentation
 import Data.IORef
+import qualified Data.Set as Set
+
+data DebuggerState = DebuggerState {
+        tracing :: Bool        
+    ,   breakAt :: BreakAt
+    }
+
+data BreakAt = None
+             | TheseFunctions (Set FunctionName)
+
+parseBreakAt :: [String] -> BreakAt
+parseBreakAt entered = case entered of
+    "none" : [] -> None
+    funcNames -> TheseFunctions (Set.fromList funcNames)
+
+data DebuggerCommand = 
+      DCommandTrace Bool
+    | DCommandContinue
+    | DCommandArgs
+    | DCommandRet
+    | DCommandBreakAt BreakAt
+
+parseDeguggerCommand :: String -> Maybe DebuggerCommand
+parseDeguggerCommand entered = case words entered of
+    "trace" : [read -> shoudTrace] -> Just $ DCommandTrace shoudTrace
+    "continue" : []-> Just $ DCommandContinue
+    "args" : [] -> Just $ DCommandArgs
+    "ret" : [] -> Just $ DCommandRet
+    "break" : (parseBreakAt -> functions) -> Just $ DCommandBreakAt functions
+    _ -> Nothing
+
 
 debuggerAllocator :: Allocator Instrumentation
 debuggerAllocator = Allocator $ \cont -> do 

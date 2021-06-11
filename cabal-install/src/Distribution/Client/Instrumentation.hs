@@ -17,7 +17,8 @@ module Distribution.Client.Instrumentation (
             InstrumentableContext(..),
             Fixtrumentable(..),
             Instrumentator(..),
-            makeInstrumentator
+            makeInstrumentator,
+            FunctionName
         ) 
     where
 
