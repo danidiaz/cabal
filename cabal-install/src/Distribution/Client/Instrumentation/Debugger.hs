@@ -40,7 +40,7 @@ data DebuggerCommand =
       DCommandContinue
     | DCommandTrace Tracing
     | DCommandArgs
-    | DCommandRet
+    | DCommandRes
     | DCommandBreakAt BreakAt
 
 parseDebuggerCommand :: String -> Maybe DebuggerCommand
@@ -52,16 +52,23 @@ parseDebuggerCommand entered = case words entered of
 
 debuggerAllocator :: Allocator Instrumentation
 debuggerAllocator = Allocator $ \cont -> do 
-    putStrLn "(dbg) Welcome to the debugger!"
-    ref <- newIORef $ DebuggerState TracingOff BreakAtNone
+    prompt "Welcome to the debugger!"
+    prompt "Available commands are:"
+    prompt "  t[race] on|off  Shows functions entered and exited."
+    prompt "  c[continue] Continue the execution of the program."
+    prompt "  a[rgs] Show current args as JSON."
+    prompt "  r[esult] Show current result as JSON (only at function exit points)."
+    prompt "  b[reak] none|all|<FUNCTION_NAME>* Stop when entering/exiting the given functions."
+    dstate0 <- askUser [] Nothing (DebuggerState TracingOff BreakAtNone)
+    ref <- newIORef dstate0
     let debugger = Instrumentation $ \name args body -> do
             do dstate@(DebuggerState {tracing,breakAt}) <- readIORef ref
                case tracing of
-                 TracingOn -> prompt $ "entered " ++ name
+                 TracingOn -> prompt $ "Entered " ++ name
                  TracingOff -> pure ()
                let stopped = do
-                    prompt $ "stopped at " ++ name ++ " start. "
-                    prompt $ "there are " ++ show (length args) ++ "args."
+                    prompt $ "Stopped at " ++ name ++ " start. "
+                    prompt $ "There are " ++ show (length args) ++ " args."
                     askUser args Nothing dstate
                dstate' <- case breakAt of
                  BreakAtAll -> stopped
@@ -74,8 +81,8 @@ debuggerAllocator = Allocator $ \cont -> do
                  TracingOn -> prompt $ "exited " ++ name
                  TracingOff -> pure ()
                let stopped = do
-                    prompt $ "stopped at " ++ name ++ " end."
-                    prompt $ "enter command:"
+                    prompt $ "Stopped at " ++ name ++ " end."
+                    prompt $ "Enter command:"
                     askUser args (Just (toInspectionJSON r)) dstate
                dstate' <- case breakAt of
                  BreakAtAll -> stopped
@@ -91,7 +98,7 @@ debuggerCommands =
     let ctrace = DCommandTrace . parseTracing
         continue _ = DCommandContinue
         args _ = DCommandArgs
-        ret _ = DCommandRet
+        ret _ = DCommandRes
         cbreak = DCommandBreakAt . parseBreakAt
      in Map.fromList [
               ("trace",ctrace) 
@@ -102,8 +109,8 @@ debuggerCommands =
             , ("c",continue) 
             , ("args",args) 
             , ("a",args) 
-            , ("return",ret) 
-            , ("ret",ret) 
+            , ("result",ret) 
+            , ("res",ret) 
             , ("r",ret) 
             , ("break",cbreak) 
             , ("br",cbreak) 
@@ -111,13 +118,13 @@ debuggerCommands =
             ]
 
 prompt :: String -> IO ()
-prompt msg = putStrLn $ "(debugger) " ++ msg
+prompt msg = putStrLn $ "(dbg) " ++ msg
 
 askUser :: [Value] -> Maybe Value -> DebuggerState -> IO DebuggerState
 askUser args mresult = go
   where
     go dstate = do 
-      prompt $ "enter command:"
+      prompt $ "Enter command:"
       mc <- parseDebuggerCommand <$> getLine
       case mc of
         Nothing -> go dstate
@@ -128,9 +135,9 @@ askUser args mresult = go
             DCommandArgs -> do 
                 putStrLn (encodeToString args) 
                 go dstate
-            DCommandRet -> case mresult of
+            DCommandRes -> case mresult of
                 Nothing -> do
-                    prompt "function not executed yet."
+                    prompt "Function not executed yet."
                     go dstate
                 Just result -> do
                     putStrLn (encodeToString result) 
