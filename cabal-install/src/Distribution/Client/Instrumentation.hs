@@ -134,21 +134,22 @@ instance (GInstrumentableContext left, GInstrumentableContext right)
 --
 class Fixtrumentable (cc_ :: (Type -> Type) -> Type) where
     fixtrument 
-        :: Instrumentation 
-               -> cc_ ((->) (cc_ Identity)) -> cc_ Identity
+        :: Instrumentation -> Open cc_ -> Closed cc_
     default fixtrument 
-        :: ( Generic (cc_ ((->) (cc_ Identity)))
-           , Generic (cc_ Identity)
-           , GFixtrumentable (cc_ Identity) 
-                             (Rep (cc_ ((->) (cc_ Identity))))
-                             (Rep (cc_ Identity))
+        :: ( Generic (Open cc_)
+           , Generic (Closed cc_)
+           , GFixtrumentable (Closed cc_)
+                             (Rep (Open cc_))
+                             (Rep (Closed cc_))
            )
-       => Instrumentation 
-       -> cc_ ((->) (cc_ Identity)) 
-       -> cc_ Identity
+       => Instrumentation -> Open cc_ -> Closed cc_
     fixtrument instrumentation cc_ =
         let result = to (gFixtrument instrumentation result (from cc_))  
          in result
+
+type Closed cc_ = cc_ Identity
+
+type Open cc_ = cc_ ((->) (Closed cc_))
 
 class GFixtrumentable final g g' where
     gFixtrument :: Instrumentation -> final -> g x -> g' x
