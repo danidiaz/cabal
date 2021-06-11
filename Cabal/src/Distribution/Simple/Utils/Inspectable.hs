@@ -59,6 +59,8 @@ class Inspectable a where
     toInspectionJSON a = gInspectable (from a)
     
 
+instance Inspectable Value   where toInspectionJSON = id
+
 instance Inspectable (a -> b) where 
     toInspectionJSON _ = object [("function",Null)]
 
