@@ -64,7 +64,7 @@ debuggerAllocator = Allocator $ \cont -> do
     let debugger = Instrumentation $ \name args body -> do
             do dstate@(DebuggerState {tracing,breakAt}) <- readIORef ref
                case tracing of
-                 TracingOn -> prompt $ "Entered " ++ name
+                 TracingOn -> prompt $ "Entered " ++ name ++ "."
                  TracingOff -> pure ()
                let stopped = do
                     prompt $ "Stopped at " ++ name ++ " start. "
@@ -78,11 +78,10 @@ debuggerAllocator = Allocator $ \cont -> do
             r <- body
             do dstate@(DebuggerState {tracing,breakAt}) <- readIORef ref
                case tracing of
-                 TracingOn -> prompt $ "exited " ++ name
+                 TracingOn -> prompt $ "Exited " ++ name ++ "."
                  TracingOff -> pure ()
                let stopped = do
                     prompt $ "Stopped at " ++ name ++ " end."
-                    prompt $ "Enter command:"
                     askUser args (Just (toInspectionJSON r)) dstate
                dstate' <- case breakAt of
                  BreakAtAll -> stopped
