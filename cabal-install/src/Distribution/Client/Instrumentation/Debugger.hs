@@ -1,7 +1,7 @@
 {-# LANGUAGE ViewPatterns #-}
 module Distribution.Client.Instrumentation.Debugger (debuggerAllocator) where
 
-import Prelude (read)
+-- import Prelude (read)
 import Distribution.Client.Compat.Prelude
 
 import Distribution.Client.Instrumentation
@@ -9,9 +9,18 @@ import Data.IORef
 import qualified Data.Set as Set
 
 data DebuggerState = DebuggerState {
-        tracing :: Bool        
+        tracing :: Tracing
     ,   breakAt :: BreakAt
     }
+
+data Tracing =
+      TracingOn
+    | TracingOff
+
+parseTracing :: String -> Tracing
+parseTracing entered = case entered of
+    "on" -> TracingOn
+    "off" -> TracingOff
 
 data BreakAt = None
              | TheseFunctions (Set FunctionName)
@@ -22,7 +31,7 @@ parseBreakAt entered = case entered of
     funcNames -> TheseFunctions (Set.fromList funcNames)
 
 data DebuggerCommand = 
-      DCommandTrace Bool
+      DCommandTrace Tracing
     | DCommandContinue
     | DCommandArgs
     | DCommandRet
@@ -30,7 +39,7 @@ data DebuggerCommand =
 
 parseDeguggerCommand :: String -> Maybe DebuggerCommand
 parseDeguggerCommand entered = case words entered of
-    "trace" : [read -> shoudTrace] -> Just $ DCommandTrace shoudTrace
+    "trace" : [parseTracing -> shoudTrace] -> Just $ DCommandTrace shoudTrace
     "continue" : []-> Just $ DCommandContinue
     "args" : [] -> Just $ DCommandArgs
     "ret" : [] -> Just $ DCommandRet
