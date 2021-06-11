@@ -4,7 +4,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 module Distribution.Client.CompositionContext (
-        CompositionContext,
         withCompositionContext
     ) where
 

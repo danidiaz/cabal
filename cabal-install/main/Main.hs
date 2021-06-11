@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -116,7 +117,7 @@ import Distribution.Client.Utils              (determineNumJobs
                                               ,relaxEncodingErrors
                                               ,cabalInstallVersion
                                               )
-import Distribution.Client.CompositionContext ( CompositionContext, withCompositionContext )
+import Distribution.Client.CompositionContext ( withCompositionContext )
 import Distribution.Client.Instrumentation    ( has )
 
 import Distribution.Package (packageId)
@@ -185,10 +186,7 @@ main = do
 
 
 mainWorker :: [String] -> IO ()
-mainWorker args = withCompositionContext (\cc -> mainWorker_ cc args)
-
-mainWorker_ :: CompositionContext -> [String] -> IO ()
-mainWorker_ cc args = do
+mainWorker args = do
   maybeScriptAndArgs <- case args of
     []     -> return Nothing
     (h:tl) -> (\b -> if b then Just (h:|tl) else Nothing) <$> CmdRun.validScript h
@@ -207,7 +205,7 @@ mainWorker_ cc args = do
           CommandHelp     help           -> printCommandHelp help
           CommandList     opts           -> printOptionsList opts
           CommandErrors   errs           -> maybe (printErrors errs) go maybeScriptAndArgs where
-            go (script:|scriptArgs) = CmdRun.handleShebang (has cc) script scriptArgs
+            go (script:|scriptArgs) =  withCompositionContext $ \cc -> CmdRun.handleShebang (has cc) script scriptArgs
           CommandReadyToGo action        -> action globalFlags
 
   where
@@ -233,6 +231,9 @@ mainWorker_ cc args = do
                                   ++ display cabalVersion
                                   ++ " of the Cabal library "
 
+    usesCompositionContext action flags targets globalFlags = 
+        withCompositionContext $ \cc -> action (has cc) flags targets globalFlags
+
     commands = map commandFromSpec commandSpecs
     commandSpecs =
       [ regularCmd listCommand listAction
@@ -251,20 +252,20 @@ mainWorker_ cc args = do
       , hiddenCmd  formatCommand formatAction
       , hiddenCmd  actAsSetupCommand actAsSetupAction
       , hiddenCmd  manpageCommand (manpageAction commandSpecs)
-      , regularCmd CmdListBin.listbinCommand     (CmdListBin.listbinAction (has cc))
+      , regularCmd CmdListBin.listbinCommand  (usesCompositionContext CmdListBin.listbinAction)
 
       ] ++ concat
       [ newCmd  CmdConfigure.configureCommand CmdConfigure.configureAction
       , newCmd  CmdUpdate.updateCommand       CmdUpdate.updateAction
-      , newCmd  CmdBuild.buildCommand         (CmdBuild.buildAction (has cc))
-      , newCmd  CmdRepl.replCommand           (CmdRepl.replAction (has cc))
-      , newCmd  CmdFreeze.freezeCommand       (CmdFreeze.freezeAction (has cc))
-      , newCmd  CmdHaddock.haddockCommand     (CmdHaddock.haddockAction (has cc))
-      , newCmd  CmdInstall.installCommand     (CmdInstall.installAction (has cc))
-      , newCmd  CmdRun.runCommand             (CmdRun.runAction (has cc))
-      , newCmd  CmdTest.testCommand           (CmdTest.testAction (has cc))
-      , newCmd  CmdBench.benchCommand         (CmdBench.benchAction (has cc))
-      , newCmd  CmdExec.execCommand           (CmdExec.execAction (has cc))
+      , newCmd  CmdBuild.buildCommand         (usesCompositionContext CmdBuild.buildAction)
+      , newCmd  CmdRepl.replCommand           (usesCompositionContext CmdRepl.replAction)
+      , newCmd  CmdFreeze.freezeCommand       (usesCompositionContext CmdFreeze.freezeAction)
+      , newCmd  CmdHaddock.haddockCommand     (usesCompositionContext CmdHaddock.haddockAction)
+      , newCmd  CmdInstall.installCommand     (usesCompositionContext CmdInstall.installAction)
+      , newCmd  CmdRun.runCommand             (usesCompositionContext CmdRun.runAction)
+      , newCmd  CmdTest.testCommand           (usesCompositionContext CmdTest.testAction)
+      , newCmd  CmdBench.benchCommand         (usesCompositionContext CmdBench.benchAction)
+      , newCmd  CmdExec.execCommand           (usesCompositionContext CmdExec.execAction)
       , newCmd  CmdClean.cleanCommand         CmdClean.cleanAction
       , newCmd  CmdSdist.sdistCommand         CmdSdist.sdistAction
 
