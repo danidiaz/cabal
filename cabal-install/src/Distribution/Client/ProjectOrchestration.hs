@@ -175,7 +175,7 @@ import           Control.Exception (assert)
 import           System.Posix.Signals (sigKILL, sigSEGV)
 #endif
 
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Self(..))
 
 
 -- | Tracks what command is being executed, because we need to hide this somewhere
@@ -297,13 +297,13 @@ instance Inspectable ProjectBuildContext
 -- instrumenting polymorphic functions is trickier.
 withInstallPlan
     :: ( Has RebuildInstallPlan cc ) 
-    => cc
+    => Self cc
     -> Verbosity
     -> ProjectBaseContext
     -> (ElaboratedInstallPlan -> ElaboratedSharedConfig -> IO a)
     -> IO a
 withInstallPlan
-    cc
+    (Self {self})
     verbosity
     ProjectBaseContext {
       distDirLayout,
@@ -317,7 +317,7 @@ withInstallPlan
     -- the user has asked for.
     --
     (elaboratedPlan, _, elaboratedShared, _, _) <-
-      rebuildInstallPlan (has cc)
+      rebuildInstallPlan self
                          verbosity
                          distDirLayout cabalDirLayout
                          projectConfig
@@ -336,17 +336,17 @@ instance Instrumentable RunProjectPreBuildPhase
 
 makeRunProjectPreBuildPhase :: ( Has RebuildInstallPlan cc 
                                )
-                            => cc 
+                            => Self cc 
                             -> RunProjectPreBuildPhase
 makeRunProjectPreBuildPhase cc = RunProjectPreBuildPhase $ makeRunProjectPreBuildPhase_ cc
 
 makeRunProjectPreBuildPhase_::
     ( Has RebuildInstallPlan cc 
     )
-    => cc
+    => Self cc
     -> Function RunProjectPreBuildPhase
 makeRunProjectPreBuildPhase_
-    cc
+    self_@(Self {self})
     verbosity
     ProjectBaseContext {
       distDirLayout,
@@ -360,7 +360,7 @@ makeRunProjectPreBuildPhase_
     -- the user has asked for.
     --
     (elaboratedPlan, _, elaboratedShared, _, _) <-
-      rebuildInstallPlan (has cc)
+      rebuildInstallPlan self
                          verbosity
                          distDirLayout cabalDirLayout
                          projectConfig
@@ -409,10 +409,10 @@ newtype RunProjectBuildPhase = RunProjectBuildPhase {
     deriving Generic
 instance Instrumentable RunProjectBuildPhase
 
-makeRunProjectBuildPhase :: cc -> RunProjectBuildPhase
+makeRunProjectBuildPhase :: Self cc -> RunProjectBuildPhase
 makeRunProjectBuildPhase cc = RunProjectBuildPhase $ makeRunProjectBuildPhase_ cc
 
-makeRunProjectBuildPhase_ :: cc
+makeRunProjectBuildPhase_ :: Self cc
                           -> Function RunProjectBuildPhase
 makeRunProjectBuildPhase_ _ _ ProjectBaseContext{buildSettings} _
   | buildSettingDryRun buildSettings
@@ -450,11 +450,11 @@ newtype RunProjectPostBuildPhase = RunProjectPostBuildPhase {
     deriving Generic
 instance Instrumentable RunProjectPostBuildPhase
 
-makeRunProjectPostBuildPhase :: cc -> RunProjectPostBuildPhase
+makeRunProjectPostBuildPhase :: Self cc -> RunProjectPostBuildPhase
 makeRunProjectPostBuildPhase cc = RunProjectPostBuildPhase $ makeRunProjectPostBuildPhase_ cc
 
 makeRunProjectPostBuildPhase_ 
-                         :: cc
+                         :: Self cc
                          -> Function RunProjectPostBuildPhase
 makeRunProjectPostBuildPhase_ _ _ ProjectBaseContext{buildSettings} _ _
   | buildSettingDryRun buildSettings

@@ -113,7 +113,7 @@ import System.Directory
 import System.FilePath
          ( (</>), isValid, isPathSeparator, takeExtension )
 
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has) )
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Self(..))
 
 runCommand :: CommandUI (NixStyleFlags ())
 runCommand = CommandUI
@@ -170,15 +170,15 @@ makeRunAction :: ( Has RunProjectPreBuildPhase cc
                  , Has RunProjectBuildPhase cc 
                  , Has RunProjectPostBuildPhase cc 
                  )
-              => cc -> RunAction
+              => Self cc -> RunAction
 makeRunAction cc = RunAction $ makeRunAction_ cc
 
 makeRunAction_ :: ( Has RunProjectPreBuildPhase cc
                   , Has RunProjectBuildPhase cc 
                   , Has RunProjectPostBuildPhase cc 
                   )
-               => cc -> Function RunAction
-makeRunAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
+               => Self cc -> Function RunAction
+makeRunAction_ (Self {self}) flags@NixStyleFlags {..} targetStrings globalFlags = do
     globalTmp <- getTemporaryDirectory
     tmpDir <- createTempDirectory globalTmp "cabal-repl."
 
@@ -213,7 +213,7 @@ makeRunAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
           Right sels -> return (baseCtx, sels)
 
     buildCtx <-
-      runProjectPreBuildPhase (has cc) verbosity baseCtx' $ \elaboratedPlan -> do
+      runProjectPreBuildPhase self verbosity baseCtx' $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx')) $
               die' verbosity $
@@ -259,8 +259,8 @@ makeRunAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx' buildCtx
 
-    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx' buildCtx
-    runProjectPostBuildPhase (has cc) verbosity baseCtx' buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase self verbosity baseCtx' buildCtx
+    runProjectPostBuildPhase self verbosity baseCtx' buildCtx buildOutcomes
 
 
     let elaboratedPlan = elaboratedPlanToExecute buildCtx
@@ -355,12 +355,12 @@ newtype HandleShebangAction = HandleShebangAction { handleShebang :: FilePath ->
     deriving Generic
 instance Instrumentable HandleShebangAction
 
-makeHandleShebangAction :: Has RunAction cc => cc -> HandleShebangAction
+makeHandleShebangAction :: Has RunAction cc => Self cc -> HandleShebangAction
 makeHandleShebangAction cc = HandleShebangAction $ makeHandleShebangAction_ cc
 
-makeHandleShebangAction_ :: Has RunAction cc => cc -> Function HandleShebangAction
-makeHandleShebangAction_ cc script args =
-  runAction (has cc) (commandDefaultFlags runCommand) (script:args) defaultGlobalFlags
+makeHandleShebangAction_ :: Has RunAction cc => Self cc -> Function HandleShebangAction
+makeHandleShebangAction_ (Self {self}) script args =
+  runAction self (commandDefaultFlags runCommand) (script:args) defaultGlobalFlags
 
 parseScriptBlock :: BS.ByteString -> ParseResult Executable
 parseScriptBlock str =

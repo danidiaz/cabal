@@ -1,6 +1,9 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE NamedFieldPuns #-}
 -- | cabal-install CLI command: build
 --
 module Distribution.Client.CmdBuild (
@@ -32,7 +35,7 @@ import Distribution.Verbosity
          ( normal )
 import Distribution.Simple.Utils
          ( wrapText, die' )
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Self (..))
 
 import qualified Data.Map as Map
 
@@ -103,20 +106,23 @@ makeBuildAction :: ( Has RunProjectPreBuildPhase cc
                    , Has RunProjectBuildPhase cc 
                    , Has RunProjectPostBuildPhase cc 
                    )
-                => cc 
+                => Self cc 
                 -> BuildAction
-makeBuildAction cc = BuildAction $ makeBuildAction_ cc
+makeBuildAction self_ = BuildAction $ makeBuildAction_ self_
 
 -- Having to write this auxiliary function with a full signature outside makeBuildAction
 -- is annoying, but seems necessary for the original where bindings to work unchanged. 
-makeBuildAction_ :: ( Has RunProjectPreBuildPhase cc
+makeBuildAction_ :: forall cc.
+                    ( Has RunProjectPreBuildPhase cc
                     , Has RunProjectBuildPhase cc 
                     , Has RunProjectPostBuildPhase cc 
                     )
-                 => cc -> Function BuildAction
-makeBuildAction_ cc flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStrings globalFlags = do
+                 => Self cc -> Function BuildAction
+makeBuildAction_ (Self {self}) flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStrings globalFlags = do
     -- TODO: This flags defaults business is ugly
-    let onlyConfigure = fromFlag (buildOnlyConfigure defaultBuildFlags
+    let -- self :: forall r .Has r cc => r
+        -- self = has cc
+        onlyConfigure = fromFlag (buildOnlyConfigure defaultBuildFlags
                                  <> buildOnlyConfigure buildFlags)
         targetAction
             | onlyConfigure = TargetActionConfigure
@@ -129,7 +135,7 @@ makeBuildAction_ cc flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStr
       =<< readTargetSelectors (localPackages baseCtx) Nothing targetStrings
 
     buildCtx <-
-      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase self verbosity baseCtx $ \elaboratedPlan -> do
 
             -- Interpret the targets on the command line as build targets
             -- (as opposed to say repl or haddock targets).
@@ -156,8 +162,8 @@ makeBuildAction_ cc flags@NixStyleFlags { extraFlags = buildFlags, ..} targetStr
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
-    runProjectPostBuildPhase (has cc) verbosity baseCtx buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase self verbosity baseCtx buildCtx
+    runProjectPostBuildPhase self verbosity baseCtx buildCtx buildOutcomes
   where
     verbosity = fromFlagOrDefault normal (configVerbosity configFlags)
     cliConfig = commandLineFlagsToProjectConfig globalFlags flags

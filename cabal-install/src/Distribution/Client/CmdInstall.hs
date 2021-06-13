@@ -144,7 +144,7 @@ import System.Directory
 import System.FilePath
          ( (</>), (<.>), takeDirectory, takeBaseName )
 
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Self(..))
 
 installCommand :: CommandUI (NixStyleFlags ClientInstallFlags)
 installCommand = CommandUI
@@ -204,7 +204,7 @@ makeInstallAction :: ( Has RunProjectPreBuildPhase cc
                      , Has RunProjectPostBuildPhase cc 
                      , Has RebuildInstallPlan cc 
                      )
-                  => cc 
+                  => Self cc 
                   -> InstallAction
 makeInstallAction cc = InstallAction $ makeInstallAction_ cc
 
@@ -213,8 +213,8 @@ makeInstallAction_ :: ( Has RunProjectPreBuildPhase cc
                       , Has RunProjectPostBuildPhase cc 
                       , Has RebuildInstallPlan cc 
                       )
-                   => cc -> Function InstallAction
-makeInstallAction_ cc flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targetStrings globalFlags = do
+                   => Self cc -> Function InstallAction
+makeInstallAction_ self_@(Self self) flags@NixStyleFlags { extraFlags = clientInstallFlags', .. } targetStrings globalFlags = do
   -- Ensure there were no invalid configuration options specified.
   verifyPreconditionsOrDie verbosity configFlags'
 
@@ -267,7 +267,7 @@ makeInstallAction_ cc flags@NixStyleFlags { extraFlags = clientInstallFlags', ..
 
           (specs, selectors) <-
             getSpecsAndTargetSelectors
-              cc verbosity reducedVerbosity pkgDb targetSelectors localDistDirLayout localBaseCtx targetFilter
+              self_ verbosity reducedVerbosity pkgDb targetSelectors localDistDirLayout localBaseCtx targetFilter
 
           return ( specs ++ packageSpecifiers
                  , []
@@ -394,12 +394,12 @@ makeInstallAction_ cc flags@NixStyleFlags { extraFlags = clientInstallFlags', ..
                  (envSpecs ++ specs ++ uriSpecs)
                  InstallCommand
 
-    buildCtx <- constructProjectBuildContext cc verbosity baseCtx targetSelectors
+    buildCtx <- constructProjectBuildContext self_ verbosity baseCtx targetSelectors
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
-    runProjectPostBuildPhase (has cc) verbosity baseCtx buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase self verbosity baseCtx buildCtx
+    runProjectPostBuildPhase self verbosity baseCtx buildCtx buildOutcomes
 
     -- Now that we built everything we can do the installation part.
     -- First, figure out if / what parts we want to install:
@@ -448,7 +448,7 @@ getClientInstallFlags verbosity globalFlags existingClientInstallFlags = do
 
 getSpecsAndTargetSelectors
   :: ( Has RebuildInstallPlan cc )
-  => cc
+  => Self cc
   -> Verbosity
   -> Verbosity
   -> SourcePackageDb
@@ -457,8 +457,8 @@ getSpecsAndTargetSelectors
   -> ProjectBaseContext
   -> Maybe ComponentKindFilter
   -> IO ([PackageSpecifier UnresolvedSourcePackage], [TargetSelector])
-getSpecsAndTargetSelectors cc verbosity reducedVerbosity pkgDb targetSelectors localDistDirLayout localBaseCtx targetFilter =
-  withInstallPlan cc reducedVerbosity localBaseCtx $ \elaboratedPlan _ -> do
+getSpecsAndTargetSelectors self_ verbosity reducedVerbosity pkgDb targetSelectors localDistDirLayout localBaseCtx targetFilter =
+  withInstallPlan self_ reducedVerbosity localBaseCtx $ \elaboratedPlan _ -> do
   -- Split into known targets and hackage packages.
   (targets, hackageNames) <-
     partitionToKnownTargetsAndHackagePackages
@@ -569,14 +569,14 @@ partitionToKnownTargetsAndHackagePackages verbosity pkgDb elaboratedPlan targetS
 constructProjectBuildContext
   :: (  Has RunProjectPreBuildPhase cc 
      )
-  => cc
+  => Self cc
   -> Verbosity
   -> ProjectBaseContext
      -- ^ The synthetic base context to use to produce the full build context.
   -> [TargetSelector]
   -> IO ProjectBuildContext
-constructProjectBuildContext cc verbosity baseCtx targetSelectors = do
-  runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
+constructProjectBuildContext (Self {self}) verbosity baseCtx targetSelectors = do
+  runProjectPreBuildPhase self verbosity baseCtx $ \elaboratedPlan -> do
     -- Interpret the targets on the command line as build targets
     targets <- either (reportBuildTargetProblems verbosity) return $
       resolveTargets

@@ -52,7 +52,7 @@ import qualified Data.Map as Map
 import Distribution.Simple.Command
          ( CommandUI(..), usageAlternatives )
 
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Self(..))
 
 freezeCommand :: CommandUI (NixStyleFlags ())
 freezeCommand = CommandUI {
@@ -105,15 +105,15 @@ instance Instrumentable FreezeAction
 makeFreezeAction :: ( Has RunProjectBuildPhase cc,
                       Has RebuildInstallPlan cc
                     )
-                 => cc 
+                 => Self cc 
                  -> FreezeAction
 makeFreezeAction cc = FreezeAction $ makeFreezeAction_ cc
 
 makeFreezeAction_ :: ( Has RunProjectBuildPhase cc,
                        Has RebuildInstallPlan cc
                      )
-                  => cc -> Function FreezeAction
-makeFreezeAction_ cc flags@NixStyleFlags {..} extraArgs globalFlags = do
+                  => Self cc -> Function FreezeAction
+makeFreezeAction_ (Self {self}) flags@NixStyleFlags {..} extraArgs globalFlags = do
 
     unless (null extraArgs) $
       die' verbosity $ "'freeze' doesn't take any extra arguments: "
@@ -128,7 +128,7 @@ makeFreezeAction_ cc flags@NixStyleFlags {..} extraArgs globalFlags = do
     } <- establishProjectBaseContext verbosity cliConfig OtherCommand
 
     (_, elaboratedPlan, _, totalIndexState, activeRepos) <-
-      rebuildInstallPlan (has cc)
+      rebuildInstallPlan self
                          verbosity
                          distDirLayout cabalDirLayout
                          projectConfig

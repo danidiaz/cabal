@@ -181,7 +181,7 @@ instance Has Instrumentator CompositionContext where
 -- "closed" version of the context.
 --
 -- Instrumentation can only be applied before "closing" the context.
-open :: CompositionContext_ ((->) CompositionContext)
+open :: CompositionContext_ ((->) (Self CompositionContext))
 open = CompositionContext {
         _buildAction = makeBuildAction,
         _replAction = makeReplAction,
@@ -225,12 +225,12 @@ availableInstrumentations = M.fromList [
 -- This is the only function exported from this module.
 --
 -- Usually, there's no need to tweak it when adding new instrumentations.
-withCompositionContext :: (CompositionContext -> IO a) -> IO a
+withCompositionContext :: (Self CompositionContext -> IO a) -> IO a
 withCompositionContext cont = do 
      allocators <- selectedInstrumentations
      withAllocated (fold allocators) $ 
         \instrumentation -> 
-            let closed :: CompositionContext    
-                closed = fixtrument instrumentation open
-             in cont closed
+            let cc :: CompositionContext    
+                cc = fixtrument instrumentation open
+             in cont (selfie cc) -- there's also a selfie in Instrumentable... redundant?
 

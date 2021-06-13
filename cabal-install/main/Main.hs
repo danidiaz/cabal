@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -118,7 +119,7 @@ import Distribution.Client.Utils              (determineNumJobs
                                               ,cabalInstallVersion
                                               )
 import Distribution.Client.CompositionContext ( withCompositionContext )
-import Distribution.Client.Instrumentation    ( has )
+import Distribution.Client.Instrumentation    ( has , Self(..))
 
 import Distribution.Package (packageId)
 import Distribution.PackageDescription
@@ -205,7 +206,7 @@ mainWorker args = do
           CommandHelp     help           -> printCommandHelp help
           CommandList     opts           -> printOptionsList opts
           CommandErrors   errs           -> maybe (printErrors errs) go maybeScriptAndArgs where
-            go (script:|scriptArgs) =  withCompositionContext $ \cc -> CmdRun.handleShebang (has cc) script scriptArgs
+            go (script:|scriptArgs) =  withCompositionContext $ \self_@(Self {self}) -> CmdRun.handleShebang self script scriptArgs
           CommandReadyToGo action        -> action globalFlags
 
   where
@@ -232,7 +233,7 @@ mainWorker args = do
                                   ++ " of the Cabal library "
 
     usesCompositionContext action flags targets globalFlags = 
-        withCompositionContext $ \cc -> action (has cc) flags targets globalFlags
+        withCompositionContext $ \self_@(Self {self}) -> action self flags targets globalFlags
 
     commands = map commandFromSpec commandSpecs
     commandSpecs =

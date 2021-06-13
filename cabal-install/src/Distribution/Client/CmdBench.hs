@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 -- | cabal-install CLI command: bench
 --
@@ -41,7 +42,7 @@ import Distribution.Verbosity
 import Distribution.Simple.Utils
          ( wrapText, die' )
 
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Self(..))
 
 benchCommand :: CommandUI (NixStyleFlags ())
 benchCommand = CommandUI {
@@ -92,15 +93,15 @@ makeBenchAction :: ( Has RunProjectPreBuildPhase cc
                    , Has RunProjectBuildPhase cc 
                    , Has RunProjectPostBuildPhase cc 
                    )
-                => cc -> BenchAction
+                => Self cc -> BenchAction
 makeBenchAction cc = BenchAction $ makeBenchAction_ cc
 
 makeBenchAction_ :: ( Has RunProjectPreBuildPhase cc
                     , Has RunProjectBuildPhase cc 
                     , Has RunProjectPostBuildPhase cc 
                     )
-                 => cc -> Function BenchAction
-makeBenchAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
+                 => Self cc -> Function BenchAction
+makeBenchAction_ (Self {self}) flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 
@@ -108,7 +109,7 @@ makeBenchAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
                    =<< readTargetSelectors (localPackages baseCtx) (Just BenchKind) targetStrings
 
     buildCtx <-
-      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase self verbosity baseCtx $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx)) $
               die' verbosity $
@@ -134,8 +135,8 @@ makeBenchAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
-    runProjectPostBuildPhase (has cc) verbosity baseCtx buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase self verbosity baseCtx buildCtx
+    runProjectPostBuildPhase self verbosity baseCtx buildCtx buildOutcomes
   where
     verbosity = fromFlagOrDefault normal (configVerbosity configFlags)
     cliConfig = commandLineFlagsToProjectConfig globalFlags flags 

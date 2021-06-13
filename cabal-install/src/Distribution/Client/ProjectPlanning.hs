@@ -6,6 +6,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 -- | Planning how to build everything in a project.
 --
@@ -171,7 +172,7 @@ import           Data.List (groupBy, deleteBy)
 import qualified Data.List.NonEmpty as NE
 import           System.FilePath
 
-import           Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Instrumentator(..) )
+import           Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Self(..), Instrumentator(..) )
 
 ------------------------------------------------------------------------------
 -- * Elaborated install plan
@@ -410,16 +411,16 @@ instance Instrumentable RebuildInstallPlan
 makeRebuildInstallPlan :: ( 
                             Has Instrumentator cc
                           )
-                  => cc 
+                  => Self cc 
                   -> RebuildInstallPlan
 makeRebuildInstallPlan cc = RebuildInstallPlan $ makeRebuildInstallPlan_ cc
 
 makeRebuildInstallPlan_ :: ( 
                              Has Instrumentator cc
                            )
-                        => cc
+                        => Self cc
                         -> Function RebuildInstallPlan
-makeRebuildInstallPlan_ cc verbosity
+makeRebuildInstallPlan_ (Self {self}) verbosity
                    distDirLayout@DistDirLayout {
                      distProjectRootDirectory,
                      distProjectCacheFile
@@ -457,7 +458,7 @@ makeRebuildInstallPlan_ cc verbosity
 
           -- And example of instrumenting an internal, non-toplevel function
           -- with the help of the Instrumentator datatype.
-          liftIO $ instrumentFunction (has cc) "phaseMaintainPlanOutputs" phaseMaintainPlanOutputs elaboratedPlan elaboratedShared
+          liftIO $ instrumentFunction self "phaseMaintainPlanOutputs" phaseMaintainPlanOutputs elaboratedPlan elaboratedShared
           return (elaboratedPlan, elaboratedShared, totalIndexState, activeRepos)
 
       -- The improved plan changes each time we install something, whereas

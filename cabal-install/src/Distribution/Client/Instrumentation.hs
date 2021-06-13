@@ -17,6 +17,8 @@
 -- * Only functions that end in an IO action can be instrumented.
 module Distribution.Client.Instrumentation (
             Has(..),
+            Self(..),
+            selfie,
             Instrumentation(..),
             FunctionName,
             Allocator(..),
@@ -47,6 +49,11 @@ import Data.Kind
 -- we are searching for.
 class Has r e where
     has :: e -> r
+
+newtype Self cc = Self {self :: forall r. Has r cc => r}
+
+selfie :: cc -> Self cc
+selfie cc = Self (has cc)
 
 type FunctionName = String
 
@@ -162,14 +169,14 @@ class Fixtrumentable (cc_ :: (Type -> Type) -> Type) where
     default fixtrument 
         :: ( Generic (Open cc_)
            , Generic (Closed cc_)
-           , GFixtrumentable (Closed cc_)
+           , GFixtrumentable (Self (Closed cc_))
                              (Rep (Open cc_))
                              (Rep (Closed cc_))
            )
        => Instrumentation -> Open cc_ -> Closed cc_
     fixtrument instrumentation cc_ =
         -- Dependency injection by knot-tying.
-        let result = to (gFixtrument instrumentation result (from cc_))  
+        let result = to (gFixtrument instrumentation (selfie result) (from cc_))  
          in result
 
 -- A context where the component "beans" have been partially applied with their
@@ -179,7 +186,7 @@ type Closed cc_ = cc_ Identity
 -- In an open context, each field is actually a function from the
 -- yet-to-be-constructed closed context. Instrumentable "beans" read their own
 -- dependencies from the yet-to-be-constructed context.
-type Open cc_ = cc_ ((->) (Closed cc_))
+type Open cc_ = cc_ ((->) (Self (Closed cc_)))
 
 class GFixtrumentable final g g' where
     gFixtrument :: Instrumentation -> final -> g x -> g' x

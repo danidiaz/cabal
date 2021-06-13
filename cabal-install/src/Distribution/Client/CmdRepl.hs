@@ -105,7 +105,7 @@ import Language.Haskell.Extension
 import Distribution.CabalSpecVersion
          ( CabalSpecVersion (..) )
 
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Self(..))
 
 import Data.List
          ( (\\) )
@@ -210,15 +210,15 @@ makeReplAction :: ( Has RunProjectBuildPhase cc
                   , Has RunProjectPostBuildPhase cc 
                   , Has RebuildInstallPlan cc
                   )
-               => cc -> ReplAction
-makeReplAction cc = ReplAction $ makeReplAction_ cc
+               => Self cc -> ReplAction
+makeReplAction self_ = ReplAction $ makeReplAction_ self_
 
 makeReplAction_ :: ( Has RunProjectBuildPhase cc 
                    , Has RunProjectPostBuildPhase cc 
                    , Has RebuildInstallPlan cc
                    )
-                => cc -> Function ReplAction
-makeReplAction_ cc flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..} targetStrings globalFlags = do
+                => Self cc -> Function ReplAction
+makeReplAction_ self_@(Self self) flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..} targetStrings globalFlags = do
     let
       with           = withProject    cliConfig             verbosity targetStrings
       without config = withoutProject (config <> cliConfig) verbosity targetStrings
@@ -237,7 +237,7 @@ makeReplAction_ cc flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..}
         -- Unfortunately, the best way to do this is to let the normal solver
         -- help us resolve the targets, but that isn't ideal for performance,
         -- especially in the no-project case.
-        withInstallPlan cc (lessVerbose verbosity) baseCtx $ \elaboratedPlan _ -> do
+        withInstallPlan self_ (lessVerbose verbosity) baseCtx $ \elaboratedPlan _ -> do
           -- targets should be non-empty map, but there's no NonEmptyMap yet.
           targets <- validatedTargets elaboratedPlan targetSelectors
 
@@ -258,7 +258,7 @@ makeReplAction_ cc flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..}
     -- In addition, to avoid a *third* trip through the solver, we are
     -- replicating the second half of 'runProjectPreBuildPhase' by hand
     -- here.
-    (buildCtx, replFlags'') <- withInstallPlan cc verbosity baseCtx' $
+    (buildCtx, replFlags'') <- withInstallPlan self_ verbosity baseCtx' $
       \elaboratedPlan elaboratedShared' -> do
         let ProjectBaseContext{..} = baseCtx'
 
@@ -311,8 +311,8 @@ makeReplAction_ cc flags@NixStyleFlags { extraFlags = (replFlags, envFlags), ..}
           }
     printPlan verbosity baseCtx' buildCtx'
 
-    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx' buildCtx'
-    runProjectPostBuildPhase (has cc) verbosity baseCtx' buildCtx' buildOutcomes
+    buildOutcomes <- runProjectBuildPhase self verbosity baseCtx' buildCtx'
+    runProjectPostBuildPhase self verbosity baseCtx' buildCtx' buildOutcomes
     finalizer
   where
     verbosity = fromFlagOrDefault normal (configVerbosity configFlags)

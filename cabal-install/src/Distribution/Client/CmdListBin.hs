@@ -45,7 +45,7 @@ import qualified Distribution.Client.InstallPlan         as IP
 import qualified Distribution.Simple.InstallDirs         as InstallDirs
 import qualified Distribution.Solver.Types.ComponentDeps as CD
 
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Self(..))
 
 -------------------------------------------------------------------------------
 -- Command
@@ -74,14 +74,14 @@ instance Instrumentable ListbinAction
 
 makeListbinAction :: ( Has RunProjectPreBuildPhase cc 
                      )
-                  => cc 
+                  => Self cc 
                   -> ListbinAction
 makeListbinAction cc = ListbinAction $ makeListbinAction_ cc
 
 makeListbinAction_ :: ( Has RunProjectPreBuildPhase cc 
                       )
-                   => cc -> Function ListbinAction
-makeListbinAction_ cc flags@NixStyleFlags{..} args globalFlags = do
+                   => Self cc -> Function ListbinAction
+makeListbinAction_ (Self {self}) flags@NixStyleFlags{..} args globalFlags = do
     -- fail early if multiple target selectors specified
     target <- case args of
         []  -> die' verbosity "One target is required, none provided"
@@ -97,7 +97,7 @@ makeListbinAction_ cc flags@NixStyleFlags{..} args globalFlags = do
         =<< readTargetSelectors localPkgs (Just ExeKind) [target]
 
     buildCtx <-
-      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase self verbosity baseCtx $ \elaboratedPlan -> do
             -- Interpret the targets on the command line as build targets
             -- (as opposed to say repl or haddock targets).
             targets <- either (reportTargetProblems verbosity) return

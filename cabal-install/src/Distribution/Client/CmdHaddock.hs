@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 -- | cabal-install CLI command: haddock
 --
@@ -33,7 +34,7 @@ import Distribution.Verbosity
          ( normal )
 import Distribution.Simple.Utils
          ( wrapText, die' )
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has (has))
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has (has), Self(..))
 
 haddockCommand :: CommandUI (NixStyleFlags ())
 haddockCommand = CommandUI {
@@ -80,7 +81,7 @@ makeHaddockAction :: ( Has RunProjectPreBuildPhase cc
                      , Has RunProjectBuildPhase cc 
                      , Has RunProjectPostBuildPhase cc 
                      )
-                  => cc 
+                  => Self cc 
                   -> HaddockAction
 makeHaddockAction cc = HaddockAction $ makeHaddockAction_ cc
 
@@ -88,15 +89,15 @@ makeHaddockAction_ :: ( Has RunProjectPreBuildPhase cc
                       , Has RunProjectBuildPhase cc 
                       , Has RunProjectPostBuildPhase cc 
                       )
-                   => cc -> Function HaddockAction
-makeHaddockAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
+                   => Self cc -> Function HaddockAction
+makeHaddockAction_ (Self {self}) flags@NixStyleFlags {..} targetStrings globalFlags = do
     baseCtx <- establishProjectBaseContext verbosity cliConfig HaddockCommand
 
     targetSelectors <- either (reportTargetSelectorProblems verbosity) return
                    =<< readTargetSelectors (localPackages baseCtx) Nothing targetStrings
 
     buildCtx <-
-      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase self verbosity baseCtx $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx)) $
               die' verbosity
@@ -120,8 +121,8 @@ makeHaddockAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
-    runProjectPostBuildPhase (has cc) verbosity baseCtx buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase self verbosity baseCtx buildCtx
+    runProjectPostBuildPhase self verbosity baseCtx buildCtx buildOutcomes
   where
     verbosity = fromFlagOrDefault normal (configVerbosity configFlags)
     cliConfig = commandLineFlagsToProjectConfig globalFlags flags mempty -- ClientInstallFlags, not needed here

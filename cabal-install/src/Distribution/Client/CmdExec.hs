@@ -11,6 +11,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 module Distribution.Client.CmdExec
   (
     execCommand,
@@ -98,7 +99,7 @@ import Distribution.Client.Compat.Prelude
 import qualified Data.Set as S
 import qualified Data.Map as M
 
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has (has))
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has (has), Self(..))
 
 
 execCommand :: CommandUI (NixStyleFlags ())
@@ -134,14 +135,14 @@ instance Instrumentable ExecAction
 
 makeExecAction :: ( Has RunProjectPreBuildPhase cc
                   )
-               => cc 
+               => Self cc 
                -> ExecAction
 makeExecAction cc = ExecAction $ makeExecAction_ cc
 
 makeExecAction_ :: ( Has RunProjectPreBuildPhase cc
                    )
-                => cc -> Function ExecAction
-makeExecAction_ cc flags@NixStyleFlags {..} extraArgs globalFlags = do
+                => Self cc -> Function ExecAction
+makeExecAction_ (Self {self}) flags@NixStyleFlags {..} extraArgs globalFlags = do
 
   baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 
@@ -149,7 +150,7 @@ makeExecAction_ cc flags@NixStyleFlags {..} extraArgs globalFlags = do
   -- dependency tree that we've already built. So first we set up an install
   -- plan, but we walk the dependency tree without first executing the plan.
   buildCtx <- runProjectPreBuildPhase
-    (has cc)  
+    self  
     verbosity
     baseCtx
     (\plan -> return (plan, M.empty))

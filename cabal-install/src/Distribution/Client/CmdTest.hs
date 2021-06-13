@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 -- | cabal-install CLI command: test
 --
@@ -44,7 +45,7 @@ import Distribution.Simple.Utils
 
 import qualified System.Exit (exitSuccess)
 
-import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has))
+import Distribution.Client.Instrumentation (Instrumentable(Function), Has(has), Self(..))
 
 
 testCommand :: CommandUI (NixStyleFlags ())
@@ -104,15 +105,15 @@ makeTestAction :: ( Has RunProjectPreBuildPhase cc
                   , Has RunProjectBuildPhase cc 
                   , Has RunProjectPostBuildPhase cc 
                   )
-               => cc -> TestAction
+               => Self cc -> TestAction
 makeTestAction cc = TestAction $ makeTestAction_ cc
 
 makeTestAction_ :: ( Has RunProjectPreBuildPhase cc
                    , Has RunProjectBuildPhase cc 
                    , Has RunProjectPostBuildPhase cc 
                    )
-                => cc -> Function TestAction
-makeTestAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
+                => Self cc -> Function TestAction
+makeTestAction_ (Self {self}) flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     baseCtx <- establishProjectBaseContext verbosity cliConfig OtherCommand
 
@@ -120,7 +121,7 @@ makeTestAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
                    =<< readTargetSelectors (localPackages baseCtx) (Just TestKind) targetStrings
 
     buildCtx <-
-      runProjectPreBuildPhase (has cc) verbosity baseCtx $ \elaboratedPlan -> do
+      runProjectPreBuildPhase self verbosity baseCtx $ \elaboratedPlan -> do
 
             when (buildSettingOnlyDeps (buildSettings baseCtx)) $
               die' verbosity $
@@ -146,8 +147,8 @@ makeTestAction_ cc flags@NixStyleFlags {..} targetStrings globalFlags = do
 
     printPlan verbosity baseCtx buildCtx
 
-    buildOutcomes <- runProjectBuildPhase (has cc) verbosity baseCtx buildCtx
-    runProjectPostBuildPhase (has cc) verbosity baseCtx buildCtx buildOutcomes
+    buildOutcomes <- runProjectBuildPhase self verbosity baseCtx buildCtx
+    runProjectPostBuildPhase self verbosity baseCtx buildCtx buildOutcomes
   where
     failWhenNoTestSuites = testFailWhenNoTestSuites testFlags
     verbosity = fromFlagOrDefault normal (configVerbosity configFlags)
