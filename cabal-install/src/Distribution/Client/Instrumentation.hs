@@ -8,6 +8,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 -- | This module exposes functionality for generically instrumenting functions
 -- from our program logic.
@@ -22,7 +23,10 @@ module Distribution.Client.Instrumentation (
             Allocator(..),
             Instrumentable(..),
             InstrumentableFunction,
-            Fixtrumentable(..),
+            Open,
+            Closed,
+            InstrumentableAll(..),
+            Multifixable(..),
             Instrumentator(..),
             makeInstrumentator
         ) 
@@ -75,7 +79,7 @@ instance Monoid Instrumentation where
 -- the beginning of the program's execution.
 newtype Allocator i  = Allocator { 
         withAllocated :: forall r . (i -> IO r) -> IO r
-    }
+    } deriving Functor
 
 -- | First we perform the required allocations, then we 
 -- combine the results.
@@ -147,30 +151,82 @@ instance (Selector metaSel, InstrumentableFunction f)
         let f' = instrumentFunction_ instrumentation (selName sel) [] f
          in M1 (M1 (M1 (K1 f')))
 
--- The typeclass of product-like datatypes where each field is an 
--- 'Instrumentable' bean, and where the datatype can be either "closed"
--- or "open" according to the functor parameter.
+
 --
--- Typically, only one datatype in your whole application needs to
--- have an instance of this typeclass: the CompositionContext.
-class Fixtrumentable (cc_ :: (Type -> Type) -> Type) where
-    -- Apply some instrumentation to all the components of an "open" context,
-    -- and then wire the components together and resolve their mutual
-    -- dependencies, resulting in a "closed" context.
-    fixtrument 
-        :: Instrumentation -> Open cc_ -> Closed cc_
-    default fixtrument 
+--
+class InstrumentableAll (cc_ :: (Type -> Type) -> Type) where
+    instrumentAll 
+        :: Instrumentation -> Open cc_ -> Open cc_
+    default instrumentAll 
+        :: (Generic (Open cc_), GInstrumentableAll (Rep (Open cc_)))
+        => Instrumentation -> Open cc_ -> Open cc_ 
+    instrumentAll instrumentation cc = to (gInstrumentAll instrumentation (from cc))
+
+class GInstrumentableAll g where
+    gInstrumentAll :: Instrumentation -> g x -> g x
+
+instance GInstrumentableAll fields
+    => GInstrumentableAll (D1 metaData (C1 metaCons fields)) where
+    gInstrumentAll instrumentation (M1 (M1 fields)) = 
+        M1 (M1 (gInstrumentAll instrumentation fields))
+
+instance Instrumentable bean 
+    => GInstrumentableAll (S1 metaSel (Rec0 (final -> bean))) where
+     gInstrumentAll instrumentation (M1 (K1 beanf)) =
+        let beanf' = instrument instrumentation . beanf 
+         in M1 (K1 beanf')
+
+instance ( GInstrumentableAll left
+         , GInstrumentableAll right
+         ) 
+         => GInstrumentableAll (left :*: right) where
+     gInstrumentAll instrumentation (left :*: right) = 
+        let left' = gInstrumentAll instrumentation left
+            right' = gInstrumentAll instrumentation right
+         in left' :*: right'
+
+class Multifixable (cc_ :: (Type -> Type) -> Type) where
+    multifix 
+        :: Open cc_ -> Closed cc_
+    default multifix 
         :: ( Generic (Open cc_)
            , Generic (Closed cc_)
-           , GFixtrumentable (Closed cc_)
-                             (Rep (Open cc_))
-                             (Rep (Closed cc_))
+           , GMultifixable (Closed cc_)
+                           (Rep (Open cc_))
+                           (Rep (Closed cc_))
            )
-       => Instrumentation -> Open cc_ -> Closed cc_
-    fixtrument instrumentation cc_ =
+        => Open cc_ -> Closed cc_
+    multifix cc_ =
         -- Dependency injection by knot-tying.
-        let result = to (gFixtrument instrumentation result (from cc_))  
+        let result = to (gMultifix result (from cc_))  
          in result
+
+class GMultifixable final g g' where
+    gMultifix :: final -> g x -> g' x
+
+
+instance GMultifixable final fields fields'
+    => GMultifixable final (D1 metaData (C1 metaCons fields)) 
+                             (D1 metaData (C1 metaCons fields')) where
+    gMultifix final (M1 (M1 fields)) = 
+        M1 (M1 (gMultifix final fields))
+
+instance Instrumentable bean 
+    => GMultifixable final (S1 metaSel (Rec0 (final -> bean))) 
+                           (S1 metaSel (Rec0 (Identity bean))) where
+     gMultifix final (M1 (K1 beanf)) =
+        let bean' = beanf $ final
+         in M1 (K1 (Identity bean'))
+
+instance (GMultifixable final left left',
+          GMultifixable final right right') 
+        => GMultifixable final (left :*: right) (left' :*: right') where
+     gMultifix final (left :*: right) = 
+        let left' = gMultifix final left
+            right' = gMultifix final right
+         in left' :*: right'
+
+
 
 -- A context where the component "beans" have been partially applied with their
 -- own dependencies, and are ready to be used in the main application.
@@ -180,36 +236,6 @@ type Closed cc_ = cc_ Identity
 -- yet-to-be-constructed closed context. Instrumentable "beans" read their own
 -- dependencies from the yet-to-be-constructed context.
 type Open cc_ = cc_ ((->) (Closed cc_))
-
-class GFixtrumentable final g g' where
-    gFixtrument :: Instrumentation -> final -> g x -> g' x
-
--- I'm assuming that the @Generic@ instances of @SomeRecord Somef@ and
--- @SomeRecord SomeOtherF@ have the same overall "shape" in the trees of the
--- generated @Generic@ representation.
---
--- Otherwise this typeclass won't work!
-instance GFixtrumentable final fields fields'
-    => GFixtrumentable final (D1 metaData (C1 metaCons fields)) 
-                             (D1 metaData (C1 metaCons fields')) where
-    gFixtrument instrumentation final (M1 (M1 fields)) = 
-        M1 (M1 (gFixtrument instrumentation final fields))
-
-instance Instrumentable bean 
-    => GFixtrumentable final (S1 metaSel (Rec0 (final -> bean))) 
-                             (S1 metaSel (Rec0 (Identity bean))) where
-     gFixtrument instrumentation final (M1 (K1 beanf)) =
-        let bean' = instrument instrumentation . beanf $ final
-         in M1 (K1 (Identity bean'))
-
-instance (GFixtrumentable final left left',
-          GFixtrumentable final right right') 
-        => GFixtrumentable final (left :*: right) (left' :*: right') where
-     gFixtrument instrumentation final (left :*: right) = 
-        let left' = gFixtrument instrumentation final left
-            right' = gFixtrument instrumentation final right
-         in left' :*: right'
-
 
 -- Beans that need to instrument their own locally defined (in @let@ or @where@
 -- clauses) auxiliary functions can to it through this special newtype (which they

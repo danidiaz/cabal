@@ -3,6 +3,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 -- | This module collects from all parts of the codebase functions that
 -- we wish to instrument, and puts them into a big record.
@@ -48,6 +49,7 @@ import           Data.Functor.Identity
 import           Distribution.Client.Compat.Prelude
 import           Distribution.Client.Instrumentation
 import           Distribution.Client.Instrumentation.Debugger
+import           Distribution.Client.Instrumentation.Hooks
 import           Distribution.Client.CmdBuild (BuildAction(..), makeBuildAction)
 import           Distribution.Client.CmdRepl (ReplAction(..), makeReplAction)
 import           Distribution.Client.CmdHaddock (HaddockAction(..), makeHaddockAction)
@@ -76,13 +78,14 @@ import           Distribution.Client.ProjectPlanning (
                  )
 import qualified Data.Map as M
 import qualified Data.Set as S
+import           Data.Monoid
 import           System.Environment
 
 
 -- | In the "closed" form of the composition context, each
 -- field is directly available, we don't need to jump through 
 -- any hoop to access them (other than the 'Identity' wrapper).
-type CompositionContext = CompositionContext_ Identity
+type CompositionContext = Closed CompositionContext_ 
 
 -- | This is a big record containing all the functions that we wish to
 -- instrument.
@@ -119,7 +122,8 @@ data CompositionContext_ h = CompositionContext {
 -- | This means we can apply generic instrumentation to each field
 -- of the composition context, and also "tie the knot" to
 -- wire all the dependencies.
-instance Fixtrumentable CompositionContext_
+instance InstrumentableAll CompositionContext_
+instance Multifixable CompositionContext_
 
 -- | A bunch of 'Has' instances that say how to find each particular
 -- instrumentable function inside the composition context.
@@ -181,7 +185,7 @@ instance Has Instrumentator CompositionContext where
 -- "closed" version of the context.
 --
 -- Instrumentation can only be applied before "closing" the context.
-open :: CompositionContext_ ((->) CompositionContext)
+open :: Open CompositionContext_ 
 open = CompositionContext {
         _buildAction = makeBuildAction,
         _replAction = makeReplAction,
@@ -207,7 +211,7 @@ open = CompositionContext {
 --
 type InstrumentationName = String
 
-selectedInstrumentations :: IO (Map InstrumentationName (Allocator Instrumentation))
+selectedInstrumentations :: IO (Map InstrumentationName (Allocator (Endo (Open CompositionContext_))))
 selectedInstrumentations = do
     val <- lookupEnv "CABAL_INSTALL_INSTRUMENTATIONS"
     return $ case S.fromList . words <$> val of
@@ -215,11 +219,18 @@ selectedInstrumentations = do
         Just selected -> M.restrictKeys availableInstrumentations selected
 
 
-availableInstrumentations :: Map InstrumentationName (Allocator Instrumentation)
+availableInstrumentations :: Map InstrumentationName (Allocator (Endo (Open CompositionContext_)))
 availableInstrumentations = M.fromList [
-        ("debugger", debuggerAllocator)
+        ("debugger", Endo . instrumentAll <$> debuggerAllocator),
+        ("hooks", adaptHooks <$> hooksAllocator)
     ]
-
+  where 
+    adaptHooks :: Hooks -> Endo (Open CompositionContext_)
+    adaptHooks (Hooks {runProjectPreBuildPhaseBefore}) = Endo $ 
+       \cc ->
+        cc { 
+            _runProjectPreBuildPhase =  appEndo runProjectPreBuildPhaseBefore . _runProjectPreBuildPhase cc 
+           }
 
 --
 -- This is the only function exported from this module.
@@ -231,6 +242,6 @@ withCompositionContext cont = do
      withAllocated (fold allocators) $ 
         \instrumentation -> 
             let closed :: CompositionContext    
-                closed = fixtrument instrumentation open
+                closed = multifix (appEndo instrumentation open)
              in cont closed
 

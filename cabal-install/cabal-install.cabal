@@ -137,6 +137,7 @@ library
         Distribution.Client.InstallSymlink
         Distribution.Client.Instrumentation
         Distribution.Client.Instrumentation.Debugger
+        Distribution.Client.Instrumentation.Hooks
         Distribution.Client.JobControl
         Distribution.Client.List
         Distribution.Client.Manpage
