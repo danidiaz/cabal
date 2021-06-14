@@ -10,6 +10,7 @@ import Data.IORef
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Distribution.Client.Utils.Inspectable
+import System.IO
 
 data DebuggerState = DebuggerState {
         tracing :: Tracing
@@ -26,21 +27,21 @@ parseTracing entered = case entered of
     ["off"] -> TracingOff
     _ -> error "unknown trace mode"
 
-data BreakAt = BreakAtNone
-             | BreakAtAll
+data BreakAt = 
+               BreakAtAll
              | BreakAtTheseFunctions (Set FunctionName)
 
 parseBreakAt :: [String] -> BreakAt
 parseBreakAt entered = case entered of
-    "none" : [] -> BreakAtNone
     "all" : [] -> BreakAtAll
+    "none" : [] -> BreakAtTheseFunctions Set.empty 
     funcNames -> BreakAtTheseFunctions (Set.fromList funcNames)
 
 data DebuggerCommand = 
       DCommandContinue
     | DCommandTrace Tracing
-    | DCommandArgs
-    | DCommandRes
+    | DCommandArgs (Maybe FilePath)
+    | DCommandRes (Maybe FilePath)
     | DCommandBreakAt BreakAt
 
 parseDebuggerCommand :: String -> Maybe DebuggerCommand
@@ -56,10 +57,10 @@ debuggerAllocator = Allocator $ \cont -> do
     prompt "Available commands are:"
     prompt "  t[race] on|off  Shows functions entered and exited."
     prompt "  c[continue] Continue the execution of the program."
-    prompt "  a[rgs] Show current args as JSON."
-    prompt "  r[esult] Show current result as JSON (only at function exit points)."
+    prompt "  a[rgs] [> <FILEPATH>] Show current args as JSON."
+    prompt "  r[esult] [> <FILEPATH>] Show current result as JSON (only at function exit points)."
     prompt "  b[reak] none|all|<FUNCTION_NAME>* Stop when entering/exiting the given functions."
-    dstate0 <- askUser [] Nothing (DebuggerState TracingOff BreakAtNone)
+    dstate0 <- askUser [] Nothing (DebuggerState TracingOff (BreakAtTheseFunctions Set.empty))
     ref <- newIORef dstate0
     let debugger = Instrumentation $ \name args body -> do
             do dstate@(DebuggerState {tracing,breakAt}) <- readIORef ref
@@ -91,13 +92,18 @@ debuggerAllocator = Allocator $ \cont -> do
             pure r
      in cont debugger
 
+parseFileRedirect :: [String] -> Maybe FilePath
+parseFileRedirect entered = case reverse entered of
+    ">" : filepath : _ -> Just filepath
+    _ -> Nothing
+
 type DebuggerCommandText = String
 debuggerCommands :: Map DebuggerCommandText ([String] -> DebuggerCommand)
 debuggerCommands = 
     let ctrace = DCommandTrace . parseTracing
         continue _ = DCommandContinue
-        args _ = DCommandArgs
-        ret _ = DCommandRes
+        args = DCommandArgs . parseFileRedirect
+        ret = DCommandRes . parseFileRedirect
         cbreak = DCommandBreakAt . parseBreakAt
      in Map.fromList [
               ("trace",ctrace) 
@@ -131,14 +137,17 @@ askUser args mresult = go
             DCommandContinue -> pure dstate
             DCommandTrace tracing -> go (dstate { tracing })
             DCommandBreakAt breakAt -> go (dstate { breakAt })
-            DCommandArgs -> do 
-                putStrLn (encodeToString args) 
+            DCommandArgs mfilepath -> do
+                case mfilepath of
+                    Nothing -> putStrLn (encodeToString args) 
+                    Just filepath -> withFile filepath WriteMode $ \h -> hPutStrLn h (encodeToString args) 
                 go dstate
-            DCommandRes -> case mresult of
+            DCommandRes mfilepath -> case mresult of
                 Nothing -> do
                     prompt "Function not executed yet."
                     go dstate
                 Just result -> do
-                    putStrLn (encodeToString result) 
+                    case mfilepath of
+                        Nothing -> putStrLn (encodeToString result) 
+                        Just filepath -> withFile filepath WriteMode $ \h -> hPutStrLn h (encodeToString result) 
                     go dstate
-
